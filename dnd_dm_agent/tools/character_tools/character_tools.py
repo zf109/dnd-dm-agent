@@ -9,13 +9,13 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from .character_schema import get_default_character_template, calculate_modifier, calculate_proficiency_bonus
-from .session_tools import SESSIONS_DIR
-from ..utils.logger import get_logger
+from ..session_tools import SESSIONS_DIR
+from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 
-def manage_character_create(
+def tool_create_character(
     session_name: str,
     character_name: str,
     character_class: Optional[str] = None,
@@ -82,7 +82,7 @@ def manage_character_create(
     return character_data if success else None
 
 
-def manage_character_get(
+def tool_get_character(
     session_name: str,
     character_name: str,
 ) -> Optional[Dict[str, Any]]:
@@ -102,7 +102,7 @@ def manage_character_get(
     return character_data
 
 
-def manage_character_update(
+def tool_update_character(
     session_name: str,
     character_name: str,
     updates: Dict[str, Any],
@@ -137,7 +137,7 @@ def manage_character_update(
     return updated_character if success else None
 
 
-def manage_character_add_note(
+def tool_add_character_note(
     session_name: str,
     character_name: str,
     note: str,

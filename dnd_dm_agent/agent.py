@@ -8,12 +8,12 @@ from .tools.utility_tools import (
     manage_game_state,
     roll_dice,
 )
-from .tools.character_validation import validate_character_readiness
 from .tools.character_tools import (
-    manage_character_create,
-    manage_character_get,
-    manage_character_update,
-    manage_character_add_note,
+    tool_create_character,
+    tool_get_character,
+    tool_update_character,
+    tool_add_character_note,
+    tool_validate_character_readiness,
 )
 from .tools.session_management_tools import (
     lookup_knowledge,
@@ -29,11 +29,11 @@ claude_engine = create_llm_engine("claude-3.5-sonnet")
 
 
 character_toolset = [
-    validate_character_readiness,
-    manage_character_create,
-    manage_character_get,
-    manage_character_update,
-    manage_character_add_note,
+    tool_validate_character_readiness,
+    tool_create_character,
+    tool_get_character,
+    tool_update_character,
+    tool_add_character_note,
 ]
 
 knowledge_toolset = [
@@ -65,11 +65,11 @@ root_agent = Agent(
 
     Key reminders:
     - Always create a game session before character creation using create_game_session
-    - Use manage_character_create, manage_character_get, manage_character_update, and manage_character_add_note for character operations
-    - When change character sheet, always use manage_character_add_note to add a timestamped note
+    - Use tool_create_character, tool_get_character, tool_update_character, and tool_add_character_note for character operations
+    - When change character sheet, always use tool_add_character_note to add a timestamped note
     - When user ask you to change character, always check if it's allowed by checking the guide and knoweldge
     - Use roll_dice for any dice rolls needed during gameplay
-    - Validate characters with validate_character_readiness before starting adventures  
+    - Validate characters with tool_validate_character_readiness before starting adventures  
     - Reference your knowledge base with lookup_knowledge and get_dnd_class_details for accurate D&D information
     - Log important events with log_game_event for session continuity
 

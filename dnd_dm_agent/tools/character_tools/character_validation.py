@@ -57,7 +57,7 @@ def get_minimum_character_requirements() -> Dict[str, Any]:
     }
 
 
-def validate_character_readiness(session_name: str, character_name: str) -> Dict[str, Any]:
+def tool_validate_character_readiness(session_name: str, character_name: str) -> Dict[str, Any]:
     """Validate that a character has minimum required information to start gameplay.
 
     Args:
