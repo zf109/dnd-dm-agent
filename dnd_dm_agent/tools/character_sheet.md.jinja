@@ -1,0 +1,230 @@
+# D&D 5e Character Sheet
+
+---
+
+## 📝 Basic Character Information
+
+| Field | Value |
+|-------|-------|
+| **Character Name** | {{ character.basic_info.name }} |
+| **Class & Level** | {{ character.basic_info.class }} {{ character.basic_info.level }} |
+| **Race/Species** | {{ character.basic_info.race }} |
+| **Background** | {{ character.basic_info.background }} |
+| **Alignment** | {{ character.basic_info.alignment }} |
+| **Experience Points** | {{ character.basic_info.experience_points }} |
+
+---
+
+## 🎯 Core Ability Scores
+
+| Ability | Score | Modifier | Saving Throw | Proficient? |
+|---------|-------|----------|--------------|-------------|
+{%- for ability, stats in character.ability_scores.items() %}
+| **{{ ability.title() }} ({{ ability[:3].upper() }})** | {{ stats.score }} | {{ "{:+d}".format(stats.modifier) }} | {{ "{:+d}".format(stats.saving_throw) }} | {{ "⭕" if stats.proficient else "❌" }} |
+{%- endfor %}
+
+**Proficiency Bonus:** +{{ character.proficiency_bonus }}
+
+---
+
+## ⚔️ Combat Statistics
+
+| Stat | Value | Notes |
+|------|-------|-------|
+| **Armor Class (AC)** | {{ character.combat_stats.armor_class }} | |
+| **Hit Points** | {{ character.combat_stats.hit_points.current }} / {{ character.combat_stats.hit_points.maximum }} | |
+| **Hit Dice** | {{ character.combat_stats.hit_dice.available }} / {{ character.combat_stats.hit_dice.total }} | |
+| **Speed** | {{ character.combat_stats.speed }} ft | |
+| **Initiative** | {{ "{:+d}".format(character.combat_stats.initiative) }} | |
+
+---
+
+## 🛡️ Death Saves
+
+| Successes | Failures |
+|-----------|----------|
+| {{ "⭕ " * character.death_saves.successes }}{{ "⚪ " * (3 - character.death_saves.successes) }} | {{ "❌ " * character.death_saves.failures }}{{ "⚪ " * (3 - character.death_saves.failures) }} |
+
+---
+
+## 🎲 Skills
+
+### Strength-Based Skills
+{%- for skill_name, skill_data in character.skills.items() if skill_data.ability == "strength" %}
+- **{{ skill_name.replace("_", " ").title() }}** {{ "⭕" if skill_data.proficient else "❌" }} → {{ "{:+d}".format(skill_data.modifier) }}
+{%- endfor %}
+
+### Dexterity-Based Skills
+{%- for skill_name, skill_data in character.skills.items() if skill_data.ability == "dexterity" %}
+- **{{ skill_name.replace("_", " ").title() }}** {{ "⭕" if skill_data.proficient else "❌" }} → {{ "{:+d}".format(skill_data.modifier) }}
+{%- endfor %}
+
+### Intelligence-Based Skills
+{%- for skill_name, skill_data in character.skills.items() if skill_data.ability == "intelligence" %}
+- **{{ skill_name.replace("_", " ").title() }}** {{ "⭕" if skill_data.proficient else "❌" }} → {{ "{:+d}".format(skill_data.modifier) }}
+{%- endfor %}
+
+### Wisdom-Based Skills
+{%- for skill_name, skill_data in character.skills.items() if skill_data.ability == "wisdom" %}
+- **{{ skill_name.replace("_", " ").title() }}** {{ "⭕" if skill_data.proficient else "❌" }} → {{ "{:+d}".format(skill_data.modifier) }}
+{%- endfor %}
+
+### Charisma-Based Skills
+{%- for skill_name, skill_data in character.skills.items() if skill_data.ability == "charisma" %}
+- **{{ skill_name.replace("_", " ").title() }}** {{ "⭕" if skill_data.proficient else "❌" }} → {{ "{:+d}".format(skill_data.modifier) }}
+{%- endfor %}
+
+**Passive Perception:** {{ 10 + character.skills.perception.modifier }}
+
+---
+
+{% if character.proficiencies.languages %}
+## 🗣️ Proficiencies & Languages
+
+### Languages
+{%- for language in character.proficiencies.languages %}
+- {{ language }}
+{%- endfor %}
+
+---
+{% endif %}
+
+{% if character.equipment.weapons or character.attacks %}
+## ⚔️ Attacks & Weapons
+
+{% if character.attacks %}
+| Weapon | Attack Bonus | Damage | Type | Range | Notes |
+|--------|--------------|--------|------|-------|-------|
+{%- for attack in character.attacks %}
+| {{ attack.name }} | {{ "{:+d}".format(attack.attack_bonus) }} | {{ attack.damage }} | {{ attack.damage_type }} | {{ attack.range }} | {{ attack.notes }} |
+{%- endfor %}
+{% endif %}
+
+---
+{% endif %}
+
+{% if character.equipment.currency.gp > 0 or character.equipment.currency.sp > 0 or character.equipment.currency.cp > 0 or character.equipment.currency.pp > 0 %}
+## 🎒 Equipment & Inventory
+
+### Currency
+- **Gold Pieces (GP):** {{ character.equipment.currency.gp }}
+- **Silver Pieces (SP):** {{ character.equipment.currency.sp }}
+- **Copper Pieces (CP):** {{ character.equipment.currency.cp }}
+- **Platinum Pieces (PP):** {{ character.equipment.currency.pp }}
+
+---
+{% endif %}
+
+{% if character.features_and_traits.racial_traits or character.features_and_traits.class_features or character.features_and_traits.background_features %}
+## ✨ Features & Traits
+
+{% if character.features_and_traits.racial_traits %}
+### Racial Traits
+{%- for trait in character.features_and_traits.racial_traits %}
+- {{ trait }}
+{%- endfor %}
+{% endif %}
+
+{% if character.features_and_traits.class_features %}
+### Class Features
+{%- for feature in character.features_and_traits.class_features %}
+- {{ feature }}
+{%- endfor %}
+{% endif %}
+
+{% if character.features_and_traits.background_features %}
+### Background Features
+{%- for feature in character.features_and_traits.background_features %}
+- {{ feature }}
+{%- endfor %}
+{% endif %}
+
+---
+{% endif %}
+
+{% if character.spellcasting %}
+## 🔮 Spellcasting
+
+| Stat | Value |
+|------|-------|
+| **Spellcasting Ability** | {{ character.spellcasting.ability }} |
+| **Spell Save DC** | {{ character.spellcasting.save_dc }} |
+| **Spell Attack Bonus** | {{ "{:+d}".format(character.spellcasting.attack_bonus) }} |
+
+### Spell Slots
+| Level | Total | Used | Remaining |
+|-------|-------|------|-----------|
+{%- for level, slots in character.spellcasting.spell_slots.items() %}
+| **{{ level }}** | {{ slots.total }} | {{ slots.used }} | {{ slots.remaining }} |
+{%- endfor %}
+
+---
+{% endif %}
+
+{% if character.character_details.personality_traits or character.character_details.ideals or character.character_details.bonds or character.character_details.flaws or character.character_details.backstory %}
+## 📖 Character Details
+
+{% if character.character_details.personality_traits %}
+### Personality Traits
+{%- for trait in character.character_details.personality_traits %}
+- {{ trait }}
+{%- endfor %}
+{% endif %}
+
+{% if character.character_details.ideals %}
+### Ideals
+{%- for ideal in character.character_details.ideals %}
+- {{ ideal }}
+{%- endfor %}
+{% endif %}
+
+{% if character.character_details.bonds %}
+### Bonds
+{%- for bond in character.character_details.bonds %}
+- {{ bond }}
+{%- endfor %}
+{% endif %}
+
+{% if character.character_details.flaws %}
+### Flaws
+{%- for flaw in character.character_details.flaws %}
+- {{ flaw }}
+{%- endfor %}
+{% endif %}
+
+{% if character.character_details.backstory %}
+### Backstory
+{{ character.character_details.backstory }}
+{% endif %}
+
+---
+{% endif %}
+
+{% if character.notes.campaign_notes or character.notes.important_npcs or character.notes.temporary_abilities %}
+## 📝 Notes & Additional Features
+
+{% if character.notes.temporary_abilities %}
+### Temporary Abilities/Conditions
+{%- for ability in character.notes.temporary_abilities %}
+- {{ ability }}
+{%- endfor %}
+{% endif %}
+
+{% if character.notes.important_npcs %}
+### Important NPCs
+{%- for npc in character.notes.important_npcs %}
+- {{ npc }}
+{%- endfor %}
+{% endif %}
+
+{% if character.notes.campaign_notes %}
+### Campaign Notes
+{%- for note in character.notes.campaign_notes %}
+- {{ note }}
+{%- endfor %}
+{% endif %}
+
+---
+{% endif %}
+
+*Last Updated: {{ character.metadata.last_updated }}*

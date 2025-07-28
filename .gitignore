@@ -127,6 +127,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+secrets
 
 # Spyder project settings
 .spyderproject
@@ -198,3 +199,4 @@ config/keys.json
 saves/
 game_states/
 session_data/
+game_sessions/
