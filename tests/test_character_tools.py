@@ -32,7 +32,7 @@ def sample_character():
     """Sample character data for testing."""
     return {
         "basic_info": {"name": "Test Hero", "class": "Fighter", "level": 1},
-        "notes": {"campaign_notes": [], "temporary_abilities": [], "important_npcs": []},
+        "notes": {},
         "metadata": {"created_date": "2025-01-27T15:30:00", "last_updated": "2025-01-27T15:30:00"},
     }
 
@@ -63,9 +63,9 @@ def test_deep_update_basic():
     """Test basic deep update functionality."""
     base = {"a": 1, "b": {"c": 2, "d": 3}}
     updates = {"b": {"c": 99}, "e": 5}
-    
+
     result = deep_update_dict(base, updates)
-    
+
     # Should modify base in place and return it
     assert result is base
     assert base["a"] == 1  # Preserved
@@ -78,9 +78,9 @@ def test_deep_update_nested_new_keys():
     """Test adding new nested keys."""
     base = {"existing": {"old": 1}}
     updates = {"existing": {"new": 2}, "completely_new": {"nested": {"deep": 3}}}
-    
+
     deep_update_dict(base, updates)
-    
+
     assert base["existing"]["old"] == 1  # Preserved
     assert base["existing"]["new"] == 2  # Added
     assert base["completely_new"]["nested"]["deep"] == 3  # Added completely new structure
@@ -90,14 +90,14 @@ def test_deep_update_empty_dicts():
     """Test deep update with empty dictionaries."""
     base = {"a": 1}
     updates = {}
-    
+
     deep_update_dict(base, updates)
     assert base == {"a": 1}  # No changes
-    
+
     # Test updating with empty nested dict
     base = {"nested": {"value": 1}}
     updates = {"nested": {}}
-    
+
     deep_update_dict(base, updates)
     assert base["nested"]["value"] == 1  # Preserved, empty update doesn't remove
 
@@ -107,17 +107,17 @@ def test_deep_update_character_structure():
     base = {
         "basic_info": {"name": "Hero", "level": 1},
         "combat_stats": {"hit_points": {"current": 10, "maximum": 10}},
-        "ability_scores": {"strength": {"score": 15, "modifier": 2}}
+        "ability_scores": {"strength": {"score": 15, "modifier": 2}},
     }
-    
+
     updates = {
         "basic_info": {"level": 3},  # Update level, keep name
         "combat_stats": {"hit_points": {"current": 8}, "armor_class": 16},  # Update HP, add AC
-        "ability_scores": {"strength": {"score": 16}, "dexterity": {"score": 14}}  # Update STR, add DEX
+        "ability_scores": {"strength": {"score": 16}, "dexterity": {"score": 14}},  # Update STR, add DEX
     }
-    
+
     deep_update_dict(base, updates)
-    
+
     # Check updates were applied correctly
     assert base["basic_info"]["name"] == "Hero"  # Preserved
     assert base["basic_info"]["level"] == 3  # Updated
@@ -219,36 +219,34 @@ def test_add_character_note_data():
     """Test adding note to character data."""
     original_character = create_character_data("Test Hero")
 
-    updated_character = add_character_note_data(
-        original_character, "Found a secret door", "campaign_notes", "test_session"
-    )
+    updated_character = add_character_note_data(original_character, "Found a secret door", "test_session")
 
     # Check note was added
-    assert len(updated_character["notes"]["campaign_notes"]) == 1
-    assert updated_character["notes"]["campaign_notes"][0]["note"] == "Found a secret door"
-    assert updated_character["notes"]["campaign_notes"][0]["session"] == "test_session"
-    assert "timestamp" in updated_character["notes"]["campaign_notes"][0]
+    assert "test_session" in updated_character["notes"]
+    assert len(updated_character["notes"]["test_session"]) == 1
+    assert updated_character["notes"]["test_session"][0]["note"] == "Found a secret door"
+    assert "timestamp" in updated_character["notes"]["test_session"][0]
 
 
-def test_add_character_note_data_different_types():
-    """Test adding different types of notes."""
+def test_add_character_note_data_multiple_sessions():
+    """Test adding notes to different sessions."""
     original_character = create_character_data("Test Hero")
 
-    # Add different note types
-    character_with_campaign_note = add_character_note_data(original_character, "Campaign event", "campaign_notes")
-    character_with_ability_note = add_character_note_data(
-        character_with_campaign_note, "Has inspiration", "temporary_abilities"
+    # Add notes to different sessions
+    character_with_first_note = add_character_note_data(original_character, "Campaign event", "session_1")
+    character_with_second_note = add_character_note_data(
+        character_with_first_note, "Different campaign event", "session_2"
     )
-    character_with_npc_note = add_character_note_data(
-        character_with_ability_note, "Met the blacksmith", "important_npcs"
+    character_with_third_note = add_character_note_data(
+        character_with_second_note, "Another event in session 1", "session_1"
     )
 
     # Check all notes were added
-    assert len(character_with_npc_note["notes"]["campaign_notes"]) == 1
-    assert len(character_with_npc_note["notes"]["temporary_abilities"]) == 1
-    assert len(character_with_npc_note["notes"]["important_npcs"]) == 1
-
-
+    assert len(character_with_third_note["notes"]["session_1"]) == 2
+    assert len(character_with_third_note["notes"]["session_2"]) == 1
+    assert character_with_third_note["notes"]["session_1"][0]["note"] == "Campaign event"
+    assert character_with_third_note["notes"]["session_1"][1]["note"] == "Another event in session 1"
+    assert character_with_third_note["notes"]["session_2"][0]["note"] == "Different campaign event"
 
 
 # Tests for individual manage_character functions
@@ -317,16 +315,11 @@ def test_manage_character_update_function(temp_dir, sample_character):
     updates = {
         "basic_info": {"level": 7},
         "combat_stats": {"armor_class": 19},
-        "ability_scores": {
-            "strength": {"score": 18},
-            "intelligence": {"score": 16}
-        }
+        "ability_scores": {"strength": {"score": 18}, "intelligence": {"score": 16}},
     }
-    
+
     updated_character = manage_character_update(
-        session_name="test_session",
-        character_name="Update Hero",
-        updates=updates
+        session_name="test_session", character_name="Update Hero", updates=updates
     )
 
     assert updated_character is not None
@@ -339,12 +332,8 @@ def test_manage_character_update_function(temp_dir, sample_character):
 def test_manage_character_update_nonexistent(temp_dir):
     """Test manage_character_update with nonexistent character."""
     updates = {"basic_info": {"level": 5}}
-    
-    result = manage_character_update(
-        session_name="test_session",
-        character_name="Nonexistent Hero",
-        updates=updates
-    )
+
+    result = manage_character_update(session_name="test_session", character_name="Nonexistent Hero", updates=updates)
     assert result is None
 
 
@@ -355,43 +344,33 @@ def test_manage_character_add_note_function(temp_dir, sample_character):
 
     # Add note via manage_character_add_note
     updated_character = manage_character_add_note(
-        session_name="test_session",
-        character_name="Note Hero",
-        note="Direct function call note",
-        note_type="campaign_notes"
+        session_name="test_session", character_name="Note Hero", note="Direct function call note"
     )
 
     assert updated_character is not None
-    assert len(updated_character["notes"]["campaign_notes"]) == 1
-    assert updated_character["notes"]["campaign_notes"][0]["note"] == "Direct function call note"
-    assert "timestamp" in updated_character["notes"]["campaign_notes"][0]
+    assert "test_session" in updated_character["notes"]
+    assert len(updated_character["notes"]["test_session"]) == 1
+    assert updated_character["notes"]["test_session"][0]["note"] == "Direct function call note"
+    assert "timestamp" in updated_character["notes"]["test_session"][0]
 
 
 def test_manage_character_add_note_nonexistent(temp_dir):
     """Test manage_character_add_note with nonexistent character."""
-    result = manage_character_add_note(
-        session_name="test_session",
-        character_name="Nonexistent Hero",
-        note="Test note",
-        note_type="campaign_notes"
-    )
+    result = manage_character_add_note(session_name="test_session", character_name="Nonexistent Hero", note="Test note")
     assert result is None
 
 
 def test_manage_character_create_with_defaults(temp_dir):
     """Test manage_character_create with default values."""
-    character = manage_character_create(
-        session_name="test_session",
-        character_name="Default Hero"
-    )
+    character = manage_character_create(session_name="test_session", character_name="Default Hero")
 
     assert character is not None
     assert character["basic_info"]["name"] == "Default Hero"
     assert character["basic_info"]["class"] == "Fighter"  # Default
-    assert character["basic_info"]["race"] == "Human"     # Default
+    assert character["basic_info"]["race"] == "Human"  # Default
     assert character["basic_info"]["background"] == "Soldier"  # Default
-    assert character["basic_info"]["alignment"] == "Neutral"   # Default
-    assert character["basic_info"]["level"] == 1         # Default
+    assert character["basic_info"]["alignment"] == "Neutral"  # Default
+    assert character["basic_info"]["level"] == 1  # Default
     assert character["ability_scores"]["strength"]["score"] == 15  # Default
     assert character["ability_scores"]["dexterity"]["score"] == 14  # Default
     assert character["combat_stats"]["hit_points"]["maximum"] == 10  # Default

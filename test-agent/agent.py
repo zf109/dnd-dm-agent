@@ -19,7 +19,6 @@ def say_hello(name: str = "there") -> str:
     return f"Hello, {name}! How can I help you today (this is from a script)?"
 
 
-
 def create_char(name: str, character_data: Dict[str, Any], **kwargs) -> str:
     """Create a character with character data given.
 

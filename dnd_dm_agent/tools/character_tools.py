@@ -56,7 +56,7 @@ def manage_character_create(
     """
     logger.info(f"Creating character '{character_name}' in session '{session_name}'")
     logger.debug(f"Creating character with class='{character_class}', race='{race}', level={level}")
-    
+
     # Use pure function to create character data
     character_data = create_character_data(
         character_name=character_name,
@@ -75,7 +75,7 @@ def manage_character_create(
         armor_class=armor_class,
     )
     logger.debug(f"Character data created with keys: {list(character_data.keys())}")
-    
+
     # Handle I/O: save the character
     success = save_character_data(session_name, character_name, character_data, session_dir=SESSIONS_DIR)
     logger.info(f"Character save result: {success}")
@@ -118,7 +118,7 @@ def manage_character_update(
         Updated character data dictionary on success, None on failure
     """
     logger.info(f"Updating character '{character_name}' in session '{session_name}' with updates: {updates}")
-    
+
     # Handle I/O: load existing character
     existing_character = load_character_data(session_name, character_name, session_dir=SESSIONS_DIR)
     if not existing_character:
@@ -126,7 +126,7 @@ def manage_character_update(
         return None
 
     logger.debug(f"Loaded existing character with keys: {list(existing_character.keys())}")
-    
+
     # Use pure function to update character data
     updated_character = update_character_data(existing_character, updates)
     logger.debug(f"Updated character data prepared")
@@ -141,7 +141,6 @@ def manage_character_add_note(
     session_name: str,
     character_name: str,
     note: str,
-    note_type: str = "campaign_notes",
 ) -> Optional[Dict[str, Any]]:
     """Add a note to an existing character.
 
@@ -149,12 +148,13 @@ def manage_character_add_note(
         session_name: Name of the game session
         character_name: Name of the character
         note: The note text to add
-        note_type: Type of note ("campaign_notes", "temporary_abilities", "important_npcs")
 
     Returns:
         Updated character data dictionary on success, None on failure
     """
-    logger.info(f"Adding note to character '{character_name}' in session '{session_name}': {note[:50]}{'...' if len(note) > 50 else ''}")
+    logger.info(
+        f"Adding note to character '{character_name}' in session '{session_name}': {note[:50]}{'...' if len(note) > 50 else ''}"
+    )
 
     # Handle I/O: load existing character
     existing_character = load_character_data(session_name, character_name, session_dir=SESSIONS_DIR)
@@ -163,13 +163,12 @@ def manage_character_add_note(
         return None
 
     # Use pure function to add note
-    updated_character = add_character_note_data(existing_character, note, note_type, session_name)
+    updated_character = add_character_note_data(existing_character, note, session_name)
 
     # Handle I/O: save updated character
     success = save_character_data(session_name, character_name, updated_character, session_dir=SESSIONS_DIR)
     logger.info(f"Character note save result: {success}")
     return updated_character if success else None
-
 
 
 def create_character_data(
@@ -314,7 +313,7 @@ def save_character_data(
 
 def deep_update_dict(base_dict: Dict[str, Any], update_dict: Dict[str, Any]) -> None:
     """Recursively update nested dictionary in place using collections.abc.Mapping.
-    
+
     Args:
         base_dict: Dictionary to update (modified in place)
         update_dict: Dictionary containing updates to apply
@@ -342,7 +341,7 @@ def update_character_data(character_data: Dict[str, Any], updates: Dict[str, Any
     """
     logger.debug(f"Updating character data with {len(updates)} update sections")
     logger.debug(f"Update keys: {list(updates.keys())}")
-    
+
     # Create a copy to avoid mutating the original
     character = deepcopy(character_data)
     logger.debug(f"Created deep copy of character data")
@@ -353,34 +352,30 @@ def update_character_data(character_data: Dict[str, Any], updates: Dict[str, Any
     return character
 
 
-def add_character_note_data(
-    character_data: Dict[str, Any], note: str, note_type: str = "campaign_notes", session_name: str = None
-) -> Dict[str, Any]:
+def add_character_note_data(character_data: Dict[str, Any], note: str, session_name: str) -> Dict[str, Any]:
     """Add note to character data (pure function, no I/O).
 
     Args:
         character_data: Existing character data dictionary
         note: The note text to add
-        note_type: Type of note ("campaign_notes", "temporary_abilities", "important_npcs")
-        session_name: Session name to include in note metadata
+        session_name: Session name to organize notes by
 
     Returns:
         Updated character data dictionary with added note
     """
     # Create a copy to avoid mutating the original
-    character = character_data.copy() if character_data else {}
+    character = deepcopy(character_data) if character_data else {}
 
     # Initialize notes structure if it doesn't exist
     if "notes" not in character:
-        character["notes"] = {"temporary_abilities": [], "important_npcs": [], "campaign_notes": []}
+        character["notes"] = {}
 
-    # Validate note_type
-    valid_note_types = ["campaign_notes", "temporary_abilities", "important_npcs"]
-    if note_type not in valid_note_types:
-        note_type = "campaign_notes"  # Default to campaign_notes
+    # Initialize session notes list if it doesn't exist
+    if session_name not in character["notes"]:
+        character["notes"][session_name] = []
 
     # Add the note with timestamp
-    timestamped_note = {"note": note, "timestamp": datetime.now().isoformat(), "session": session_name}
+    timestamped_note = {"note": note, "timestamp": datetime.now().isoformat()}
 
-    character["notes"][note_type].append(timestamped_note)
+    character["notes"][session_name].append(timestamped_note)
     return character

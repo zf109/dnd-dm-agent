@@ -87,7 +87,7 @@ def get_default_character_template() -> Dict[str, Any]:
             },
         },
         "character_details": {"personality_traits": [], "ideals": [], "bonds": [], "flaws": [], "backstory": ""},
-        "notes": {"temporary_abilities": [], "important_npcs": [], "campaign_notes": []},
+        "notes": {},
         "advancement": {"ability_score_improvements": [], "multiclassing": []},
         "metadata": {
             "created_date": datetime.now().isoformat(),

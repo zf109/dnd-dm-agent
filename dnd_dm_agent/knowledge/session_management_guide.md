@@ -109,7 +109,7 @@ Use the individual character management functions for all character operations:
 - **manage_character_create()** - Create new characters with explicit parameters
 - **manage_character_get()** - Retrieve existing character data  
 - **manage_character_update()** - Update character fields using dictionary structure
-- **manage_character_add_note()** - Add timestamped notes to characters
+- **manage_character_add_note()** - Add simple timestamped notes organized by session
 
 ---
 
@@ -216,7 +216,7 @@ log_game_event("The Lost Mines", "Elara reached Wizard level 2")
 - `manage_character_create(session_name, character_name, character_class, race, ...)` - Create new character
 - `manage_character_get(session_name, character_name)` - Get existing character
 - `manage_character_update(session_name, character_name, updates)` - Update character fields
-- `manage_character_add_note(session_name, character_name, note, note_type)` - Add notes to track changes
+- `manage_character_add_note(session_name, character_name, note)` - Add timestamped notes organized by session, a note should be added whenever there's a change and state the context and why.
 
 
 ### Character Creation & Validation

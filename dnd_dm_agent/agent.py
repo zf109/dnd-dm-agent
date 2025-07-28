@@ -66,6 +66,8 @@ root_agent = Agent(
     Key reminders:
     - Always create a game session before character creation using create_game_session
     - Use manage_character_create, manage_character_get, manage_character_update, and manage_character_add_note for character operations
+    - When change character sheet, always use manage_character_add_note to add a timestamped note
+    - When user ask you to change character, always check if it's allowed by checking the guide and knoweldge
     - Use roll_dice for any dice rolls needed during gameplay
     - Validate characters with validate_character_readiness before starting adventures  
     - Reference your knowledge base with lookup_knowledge and get_dnd_class_details for accurate D&D information
