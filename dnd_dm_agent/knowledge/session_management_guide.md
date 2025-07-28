@@ -67,9 +67,9 @@ DM Agent: Uses manage_game_session(action="create", session_name="The Lost Mines
 3. Ask for race/species  
 4. Ask for background
 5. Ask for alignment
-6. Use manage_character_create(...) to create the character
+6. Use tool_create_character(...) to create the character
 7. Use guide_character_creation for step-by-step assistance
-8. ALWAYS validate with validate_character_readiness before gameplay
+8. ALWAYS validate with tool_validate_character_readiness before gameplay
 ```
 
 **Example:**
@@ -80,9 +80,9 @@ DM Agent: "What class would you like to play? I can provide details about any cl
 Player: "Tell me about Fighters"
 DM Agent: Uses get_dnd_class_details("Fighter")
 Player: "Fighter sounds good!"
-DM Agent: Uses manage_character_create(session_name="The Lost Mines", 
-                                   character_name="Thorin Ironbeard", 
-                                   character_class="Fighter", race="Dwarf")
+DM Agent: Uses tool_create_character(session_name="The Lost Mines", 
+                                    character_name="Thorin Ironbeard", 
+                                    character_class="Fighter", race="Dwarf")
 ```
 
 ### 3. Character Validation & Readiness
@@ -90,7 +90,7 @@ DM Agent: Uses manage_character_create(session_name="The Lost Mines",
 **CRITICAL:** Always validate character readiness before starting gameplay:
 
 ```
-DM Agent: Uses validate_character_readiness(session_name, character_name)
+DM Agent: Uses tool_validate_character_readiness(session_name, character_name)
 
 If character is not ready:
 - Use guide_character_creation to help fill missing information
@@ -106,10 +106,10 @@ If character is not ready:
 
 Use the individual character management functions for all character operations:
 
-- **manage_character_create()** - Create new characters with explicit parameters
-- **manage_character_get()** - Retrieve existing character data  
-- **manage_character_update()** - Update character fields using dictionary structure
-- **manage_character_add_note()** - Add simple timestamped notes organized by session
+- **tool_create_character()** - Create new characters with explicit parameters
+- **tool_get_character()** - Retrieve existing character data  
+- **tool_update_character()** - Update character fields using dictionary structure
+- **tool_add_character_note()** - Add simple timestamped notes organized by session
 
 ---
 
@@ -213,14 +213,14 @@ log_game_event("The Lost Mines", "Elara reached Wizard level 2")
 - `log_game_event(session_name, event_description)` - Record events
 
 ### Character Management  
-- `manage_character_create(session_name, character_name, character_class, race, ...)` - Create new character
-- `manage_character_get(session_name, character_name)` - Get existing character
-- `manage_character_update(session_name, character_name, updates)` - Update character fields
-- `manage_character_add_note(session_name, character_name, note)` - Add timestamped notes organized by session, a note should be added whenever there's a change and state the context and why.
+- `tool_create_character(session_name, character_name, character_class, race, ...)` - Create new character
+- `tool_get_character(session_name, character_name)` - Get existing character
+- `tool_update_character(session_name, character_name, updates)` - Update character fields
+- `tool_add_character_note(session_name, character_name, note)` - Add timestamped notes organized by session, a note should be added whenever there's a change and state the context and why.
 
 
 ### Character Creation & Validation
-- `validate_character_readiness(session_name, character_name)` - Check if ready to play
+- `tool_validate_character_readiness(session_name, character_name)` - Check if ready to play
 - `guide_character_creation(step, character_class, ability_method)` - Step-by-step guidance
 
 ### Knowledge & Rules

@@ -5,15 +5,17 @@ import tempfile
 import json
 from pathlib import Path
 from dnd_dm_agent.tools.character_tools import (
+    tool_create_character,
+    tool_get_character,
+    tool_update_character,
+    tool_add_character_note,
+)
+from dnd_dm_agent.tools.character_tools.character_tools import (
     load_character_data,
     save_character_data,
     create_character_data,
     update_character_data,
     add_character_note_data,
-    manage_character_create,
-    manage_character_get,
-    manage_character_update,
-    manage_character_add_note,
     deep_update_dict,
 )
 
@@ -23,7 +25,7 @@ def temp_dir(monkeypatch):
     """Create a temporary directory and patch the SESSIONS_DIR."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         # Mock SESSIONS_DIR to point to our temp directory
-        monkeypatch.setattr("dnd_dm_agent.tools.character_tools.SESSIONS_DIR", tmp_dir)
+        monkeypatch.setattr("dnd_dm_agent.tools.character_tools.character_tools.SESSIONS_DIR", tmp_dir)
         yield tmp_dir
 
 
@@ -249,10 +251,10 @@ def test_add_character_note_data_multiple_sessions():
     assert character_with_third_note["notes"]["session_2"][0]["note"] == "Different campaign event"
 
 
-# Tests for individual manage_character functions
-def test_manage_character_create_function(temp_dir):
-    """Test manage_character_create function directly."""
-    character = manage_character_create(
+# Tests for individual tool functions
+def test_tool_create_character_function(temp_dir):
+    """Test tool_create_character function directly."""
+    character = tool_create_character(
         session_name="test_session",
         character_name="Direct Hero",
         character_class="Rogue",
@@ -288,37 +290,37 @@ def test_manage_character_create_function(temp_dir):
     assert loaded_character["basic_info"]["name"] == "Direct Hero"
 
 
-def test_manage_character_get_function(temp_dir, sample_character):
-    """Test manage_character_get function directly."""
+def test_tool_get_character_function(temp_dir, sample_character):
+    """Test tool_get_character function directly."""
     # First save a character
     save_character_data("test_session", "Get Hero", sample_character, session_dir=temp_dir)
 
-    # Then get it via manage_character_get
-    character = manage_character_get(session_name="test_session", character_name="Get Hero")
+    # Then get it via tool_get_character
+    character = tool_get_character(session_name="test_session", character_name="Get Hero")
 
     assert character is not None
     assert character["basic_info"]["name"] == "Test Hero"  # From sample_character fixture
 
 
-def test_manage_character_get_nonexistent(temp_dir):
-    """Test manage_character_get with nonexistent character."""
-    character = manage_character_get(session_name="test_session", character_name="Nonexistent Hero")
+def test_tool_get_character_nonexistent(temp_dir):
+    """Test tool_get_character with nonexistent character."""
+    character = tool_get_character(session_name="test_session", character_name="Nonexistent Hero")
     assert character is None
 
 
-def test_manage_character_update_function(temp_dir, sample_character):
-    """Test manage_character_update function directly."""
+def test_tool_update_character_function(temp_dir, sample_character):
+    """Test tool_update_character function directly."""
     # First save a character
     save_character_data("test_session", "Update Hero", sample_character, session_dir=temp_dir)
 
-    # Update via manage_character_update
+    # Update via tool_update_character
     updates = {
         "basic_info": {"level": 7},
         "combat_stats": {"armor_class": 19},
         "ability_scores": {"strength": {"score": 18}, "intelligence": {"score": 16}},
     }
 
-    updated_character = manage_character_update(
+    updated_character = tool_update_character(
         session_name="test_session", character_name="Update Hero", updates=updates
     )
 
@@ -329,21 +331,21 @@ def test_manage_character_update_function(temp_dir, sample_character):
     assert updated_character["ability_scores"]["intelligence"]["score"] == 16
 
 
-def test_manage_character_update_nonexistent(temp_dir):
-    """Test manage_character_update with nonexistent character."""
+def test_tool_update_character_nonexistent(temp_dir):
+    """Test tool_update_character with nonexistent character."""
     updates = {"basic_info": {"level": 5}}
 
-    result = manage_character_update(session_name="test_session", character_name="Nonexistent Hero", updates=updates)
+    result = tool_update_character(session_name="test_session", character_name="Nonexistent Hero", updates=updates)
     assert result is None
 
 
-def test_manage_character_add_note_function(temp_dir, sample_character):
-    """Test manage_character_add_note function directly."""
+def test_tool_add_character_note_function(temp_dir, sample_character):
+    """Test tool_add_character_note function directly."""
     # First save a character
     save_character_data("test_session", "Note Hero", sample_character, session_dir=temp_dir)
 
-    # Add note via manage_character_add_note
-    updated_character = manage_character_add_note(
+    # Add note via tool_add_character_note
+    updated_character = tool_add_character_note(
         session_name="test_session", character_name="Note Hero", note="Direct function call note"
     )
 
@@ -354,15 +356,15 @@ def test_manage_character_add_note_function(temp_dir, sample_character):
     assert "timestamp" in updated_character["notes"]["test_session"][0]
 
 
-def test_manage_character_add_note_nonexistent(temp_dir):
-    """Test manage_character_add_note with nonexistent character."""
-    result = manage_character_add_note(session_name="test_session", character_name="Nonexistent Hero", note="Test note")
+def test_tool_add_character_note_nonexistent(temp_dir):
+    """Test tool_add_character_note with nonexistent character."""
+    result = tool_add_character_note(session_name="test_session", character_name="Nonexistent Hero", note="Test note")
     assert result is None
 
 
-def test_manage_character_create_with_defaults(temp_dir):
-    """Test manage_character_create with default values."""
-    character = manage_character_create(session_name="test_session", character_name="Default Hero")
+def test_tool_create_character_with_defaults(temp_dir):
+    """Test tool_create_character with default values."""
+    character = tool_create_character(session_name="test_session", character_name="Default Hero")
 
     assert character is not None
     assert character["basic_info"]["name"] == "Default Hero"
