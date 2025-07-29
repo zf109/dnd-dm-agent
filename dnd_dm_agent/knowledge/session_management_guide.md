@@ -182,7 +182,19 @@ update_session_log("The Lost Mines", "Elara reached Wizard level 2")
   "session_notes": "",
   "current_location": "Goblin Cave Entrance",
   "current_scene": "The party stands before a dark cave...",
-  "version": "2.0"
+  "history": [
+    {
+      "timestamp": "2025-01-27T18:30:00",
+      "type": "location_change",
+      "from": "Starting Location",
+      "to": "Goblin Cave Entrance"
+    },
+    {
+      "timestamp": "2025-01-27T18:35:00", 
+      "type": "scene_change",
+      "scene": "The party stands before a dark cave entrance, torchlight flickering against ancient stone..."
+    }
+  ]
 }
 ```
 
@@ -259,9 +271,22 @@ update_session_log("The Lost Mines", "Elara reached Wizard level 2")
 ### Session Continuity
 **When starting a conversation:**
 1. Check recent session logs with previous events
-2. Reference last known location and scene from manage_game_state(session_name, "get_state")
-3. Acknowledge recent character actions or story developments
-4. Set scene based on where the story left off
+2. Use manage_game_state(session_name, "get_state") to get current location, scene, and history
+3. Review the history array to understand recent location/scene changes
+4. Acknowledge recent character actions or story developments
+5. Set scene based on where the story left off
+
+### History Tracking
+**Automatic history entries are created when:**
+- Location changes: Records "from" and "to" locations with timestamp
+- Scene changes: Records new scene description with timestamp
+- All entries include ISO timestamps for chronological tracking
+
+**Use history for:**
+- Understanding session progression
+- Referencing recent location changes
+- Maintaining narrative continuity
+- Tracking party movement through the adventure
 
 ### Character Management
 TBF

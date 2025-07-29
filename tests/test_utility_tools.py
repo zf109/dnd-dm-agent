@@ -40,6 +40,14 @@ def mock_session_metadata():
         "session_notes": "",
         "current_location": "Goblin Cave",
         "current_scene": "The party stands at the cave entrance",
+        "history": [
+            {
+                "timestamp": "2025-01-27T18:00:00",
+                "type": "location_change",
+                "from": "Starting Location",
+                "to": "Goblin Cave"
+            }
+        ],
     }
 
 
@@ -63,6 +71,8 @@ def test_manage_game_state_get_state(mock_session_metadata):
             assert result["current_scene"] == "The party stands at the cave entrance"
             assert result["characters"] == ["Thorin", "Elara"]
             assert result["session_name"] == session_name
+            assert "history" in result
+            assert len(result["history"]) == 1
 
 
 def test_manage_game_state_update_location(mock_session_metadata):
@@ -85,6 +95,9 @@ def test_manage_game_state_update_location(mock_session_metadata):
             
             assert result["status"] == "success"
             assert result["location"] == new_location
+            
+            # Verify that the mock file was written to (history was added)
+            assert mock_file().write.called
 
 
 def test_manage_game_state_update_scene(mock_session_metadata):
@@ -107,6 +120,9 @@ def test_manage_game_state_update_scene(mock_session_metadata):
             
             assert result["status"] == "success"
             assert result["scene"] == new_scene
+            
+            # Verify that the mock file was written to (history was added)
+            assert mock_file().write.called
 
 
 def test_manage_game_state_session_not_found():
@@ -162,3 +178,32 @@ def test_manage_game_state_missing_parameters(mock_session_metadata):
             
             assert result["status"] == "error"
             assert "missing required parameters" in result["error_message"]
+
+
+def test_manage_game_state_history_tracking():
+    """Test that history entries are created correctly."""
+    session_name = "Test Campaign"
+    
+    # Mock metadata without history field to test backward compatibility
+    metadata_without_history = {
+        "session_name": "Test Campaign",
+        "current_location": "Old Location",
+        "current_scene": "Old scene",
+        "characters": [],
+    }
+    
+    # Mock the path operations
+    mock_session_path = MagicMock()
+    mock_session_path.exists.return_value = True
+    mock_metadata_path = MagicMock()
+    mock_session_path.__truediv__.return_value = mock_metadata_path
+    
+    with patch("dnd_dm_agent.tools.utility_tools.SESSIONS_DIR") as mock_sessions_dir:
+        mock_sessions_dir.__truediv__.return_value = mock_session_path
+        
+        # Test location change creates history entry
+        with patch("builtins.open", mock_open(read_data=json.dumps(metadata_without_history))):
+            result = manage_game_state(session_name, "update_location", location="New Location")
+            
+            assert result["status"] == "success"
+            assert result["location"] == "New Location"

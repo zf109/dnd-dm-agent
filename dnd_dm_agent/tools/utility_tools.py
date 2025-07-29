@@ -93,10 +93,24 @@ def manage_game_state(session_name: str, action: str, location: Optional[str] = 
                 "current_scene": metadata.get("current_scene", ""),
                 "characters": metadata.get("characters", []),
                 "session_name": session_name,
+                "history": metadata.get("history", []),
             }
         elif action == "update_location" and location:
+            old_location = metadata.get("current_location", "Unknown Location")
             metadata["current_location"] = location
             metadata["last_played"] = datetime.now().isoformat()
+            
+            # Add to history
+            if "history" not in metadata:
+                metadata["history"] = []
+            
+            history_entry = {
+                "timestamp": datetime.now().isoformat(),
+                "type": "location_change",
+                "from": old_location,
+                "to": location
+            }
+            metadata["history"].append(history_entry)
             
             # Save metadata
             with open(metadata_path, "w") as f:
@@ -106,6 +120,17 @@ def manage_game_state(session_name: str, action: str, location: Optional[str] = 
         elif action == "update_scene" and scene:
             metadata["current_scene"] = scene
             metadata["last_played"] = datetime.now().isoformat()
+            
+            # Add to history
+            if "history" not in metadata:
+                metadata["history"] = []
+            
+            history_entry = {
+                "timestamp": datetime.now().isoformat(),
+                "type": "scene_change",
+                "scene": scene
+            }
+            metadata["history"].append(history_entry)
             
             # Save metadata
             with open(metadata_path, "w") as f:
