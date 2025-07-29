@@ -15,7 +15,7 @@ from .tools.character_tools import (
     tool_add_character_note,
     tool_validate_character_readiness,
 )
-from .tools.session_management_tools import (
+from .tools.knowledge_tools import (
     lookup_knowledge,
     get_dnd_class_details,
     get_dm_guidance,
