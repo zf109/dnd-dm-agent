@@ -140,7 +140,7 @@ Use the individual character management functions for all character operations:
 ```
 DM Agent: Uses manage_game_state() for current location/scene tracking
 DM Agent: Uses roll_dice() for ability checks, attacks, and random events
-DM Agent: Uses log_game_event() to record important moments
+DM Agent: Uses update_session_log() to record important moments
 ```
 
 ### Character Progression Tracking
@@ -153,9 +153,9 @@ DM Agent: Uses log_game_event() to record important moments
 
 ### Event Logging
 ```python
-log_game_event("The Lost Mines", "Thorin discovered a secret passage with Investigation 18")
-log_game_event("The Lost Mines", "Party defeated goblin ambush, gained 50 XP each")
-log_game_event("The Lost Mines", "Elara reached Wizard level 2")
+update_session_log("The Lost Mines", "Thorin discovered a secret passage with Investigation 18")
+update_session_log("The Lost Mines", "Party defeated goblin ambush, gained 50 XP each")
+update_session_log("The Lost Mines", "Elara reached Wizard level 2")
 ```
 
 ---
@@ -210,13 +210,13 @@ log_game_event("The Lost Mines", "Elara reached Wizard level 2")
 ### Session Management
 - `manage_game_session(action, session_name, dm_name)` - Create/list sessions
 - `manage_game_state(action, location, scene)` - Track current state
-- `log_game_event(session_name, event_description)` - Record events
+- `update_session_log(session_name, event_description)` - Record events, including various checks / dice rolls.
 
 ### Character Management  
 - `tool_create_character(session_name, character_name, character_class, race, ...)` - Create new character
 - `tool_get_character(session_name, character_name)` - Get existing character
 - `tool_update_character(session_name, character_name, updates)` - Update character fields
-- `tool_add_character_note(session_name, character_name, note)` - Add timestamped notes organized by session, a note should be added whenever there's a change and state the context and why.
+- `tool_add_character_note(session_name, character_name, note)` - Add timestamped notes organized by session, a note should be added whenever there's a change in character sheet information and state the context and why.
 
 
 ### Character Creation & Validation
