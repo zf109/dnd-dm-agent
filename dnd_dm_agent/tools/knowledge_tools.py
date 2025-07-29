@@ -50,22 +50,25 @@ def load_knowledge_file(filename: str) -> Dict[str, Any]:
         return {"status": "error", "error_message": f"Failed to load knowledge file: {str(e)}"}
 
 
-def search_knowledge(query: str, files: Optional[List[str]] = None) -> Dict[str, Any]:
-    """Search across knowledge files for information.
+def lookup_knowledge(query: str, specific_files: Optional[List[str]] = None) -> Dict[str, Any]:
+    """Search the knowledge base for information about D&D rules, classes, or session management.
+
+    Use this tool to access detailed D&D information including class features,
+    session management guidance, and other reference material.
 
     Args:
-        query: Search term or question
-        files: Optional list of specific files to search (defaults to all)
+        query: What to search for (e.g., "Fighter", "advantage", "inspiration")
+        specific_files: Optional list of files to search (e.g., ["classes_5e"])
 
     Returns:
-        Dictionary with search results
+        Dictionary with search results from knowledge base
     """
     try:
         knowledge_files = get_knowledge_files()
 
-        if files:
+        if specific_files:
             # Search only specified files
-            search_files = {name: path for name, path in knowledge_files.items() if name in files}
+            search_files = {name: path for name, path in knowledge_files.items() if name in specific_files}
         else:
             # Search all files
             search_files = knowledge_files
@@ -132,8 +135,8 @@ def _extract_matching_sections(content: str, query: str) -> List[Dict[str, str]]
     return sections
 
 
-def get_class_information(class_name: str) -> Dict[str, Any]:
-    """Get detailed information about a D&D class.
+def get_dnd_class_details(class_name: str) -> Dict[str, Any]:
+    """Get detailed information about a D&D class from the classes_5e knowledge file.
 
     Args:
         class_name: Name of the D&D class
@@ -161,11 +164,14 @@ def get_class_information(class_name: str) -> Dict[str, Any]:
         return {"status": "error", "error_message": f"Failed to get class information: {str(e)}"}
 
 
-def get_available_knowledge() -> Dict[str, Any]:
+def list_available_knowledge() -> Dict[str, Any]:
     """List all available knowledge files and their descriptions.
 
     Returns:
         Dictionary with available knowledge files
+        
+    Note:
+        Descriptions are truncated to first 200 characters with "..." appended
     """
     try:
         knowledge_files = get_knowledge_files()
@@ -188,8 +194,8 @@ def get_available_knowledge() -> Dict[str, Any]:
         return {"status": "error", "error_message": f"Failed to get available knowledge: {str(e)}"}
 
 
-def get_session_management_guidance(topic: Optional[str] = None) -> Dict[str, Any]:
-    """Get session management guidance from knowledge base.
+def get_dm_guidance(topic: Optional[str] = None) -> Dict[str, Any]:
+    """Get session management guidance from the session_management_guide knowledge file.
 
     Args:
         topic: Optional specific topic to search for
@@ -219,70 +225,3 @@ def get_session_management_guidance(topic: Optional[str] = None) -> Dict[str, An
         return {"status": "error", "error_message": f"Failed to get session management guidance: {str(e)}"}
 
 
-def lookup_knowledge(query: str, specific_files: Optional[list] = None) -> Dict[str, Any]:
-    """Search the knowledge base for information about D&D rules, classes, or session management.
-
-    Use this tool to access detailed D&D information including class features,
-    session management guidance, and other reference material.
-
-    Args:
-        query: What to search for (e.g., "Fighter", "advantage", "inspiration")
-        specific_files: Optional list of files to search (e.g., ["classes_5e"])
-
-    Returns:
-        Dictionary with search results from knowledge base
-    """
-    try:
-        return search_knowledge(query, specific_files)
-    except Exception as e:
-        return {"status": "error", "error_message": str(e)}
-
-
-def get_dnd_class_details(class_name: str) -> Dict[str, Any]:
-    """Get detailed information about a specific D&D class.
-
-    Use this tool to get comprehensive information about any D&D 5e class
-    including features, abilities, and recommendations.
-
-    Args:
-        class_name: Name of the D&D class (e.g., "Fighter", "Wizard", "Rogue")
-
-    Returns:
-        Dictionary with detailed class information
-    """
-    try:
-        return get_class_information(class_name)
-    except Exception as e:
-        return {"status": "error", "error_message": str(e)}
-
-
-def get_dm_guidance(topic: Optional[str] = None) -> Dict[str, Any]:
-    """Get session management and DM guidance from the knowledge base.
-
-    Use this tool to access best practices for running D&D sessions,
-    managing players, and handling various game situations.
-
-    Args:
-        topic: Optional specific topic to look up (e.g., "combat", "roleplay")
-
-    Returns:
-        Dictionary with DM guidance and best practices
-    """
-    try:
-        return get_session_management_guidance(topic)
-    except Exception as e:
-        return {"status": "error", "error_message": str(e)}
-
-
-def list_available_knowledge() -> Dict[str, Any]:
-    """List all available knowledge files and their contents.
-
-    Use this tool to see what knowledge is available in the system.
-
-    Returns:
-        Dictionary with available knowledge files and descriptions
-    """
-    try:
-        return get_available_knowledge()
-    except Exception as e:
-        return {"status": "error", "error_message": str(e)}
