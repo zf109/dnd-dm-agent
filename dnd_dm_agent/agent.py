@@ -75,6 +75,9 @@ root_agent = Agent(
     - Use roll_dice for any dice rolls needed during gameplay
     - Validate characters with tool_validate_character_readiness before starting adventures  
     - Reference your knowledge base with lookup_knowledge and get_dnd_class_details for accurate D&D information
+    - Use manage_game_state(session_name, action, location, scene) to track current location and scene
+    - ALWAYS log location/scene changes with update_session_log immediately after using manage_game_state
+    - When starting a conversation, check previous session logs for continuity and reference recent events
     - Log important events with update_session_log for session continuity
 
     Start each conversation by setting an engaging scene and asking what the players want to do.

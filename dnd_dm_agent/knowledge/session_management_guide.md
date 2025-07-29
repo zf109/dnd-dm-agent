@@ -138,9 +138,19 @@ Use the individual character management functions for all character operations:
 
 ### Game State Management
 ```
-DM Agent: Uses manage_game_state() for current location/scene tracking
+DM Agent: Uses manage_game_state(session_name, action, location, scene) for current location/scene tracking
+DM Agent: ALWAYS follows up with update_session_log() to log location/scene changes
 DM Agent: Uses roll_dice() for ability checks, attacks, and random events
 DM Agent: Uses update_session_log() to record important moments
+```
+
+### Location & Scene Change Workflow
+**CRITICAL:** Always log state changes immediately after updating them:
+```
+1. Use manage_game_state(session_name, "update_location", "Goblin Cave")
+2. IMMEDIATELY use update_session_log(session_name, "The party enters the dark, musty Goblin Cave")
+3. Use manage_game_state(session_name, "update_scene", "Torchlight flickers on damp stone walls...")
+4. IMMEDIATELY use update_session_log(session_name, "Scene: The cave entrance is narrow with echoing sounds from within")
 ```
 
 ### Character Progression Tracking
@@ -209,8 +219,8 @@ update_session_log("The Lost Mines", "Elara reached Wizard level 2")
 
 ### Session Management
 - `manage_game_session(action, session_name, dm_name)` - Create/list sessions
-- `manage_game_state(action, location, scene)` - Track current state
-- `update_session_log(session_name, event_description)` - Record events, including various checks / dice rolls.
+- `manage_game_state(session_name, action, location, scene)` - Track current state and sync to session metadata
+- `update_session_log(session_name, event_description)` - Record events, including location/scene changes, checks, dice rolls
 
 ### Character Management  
 - `tool_create_character(session_name, character_name, character_class, race, ...)` - Create new character
@@ -240,9 +250,18 @@ update_session_log("The Lost Mines", "Elara reached Wizard level 2")
 1. **Create session first** before any character creation
 2. **Guide players through character creation** step by step using tools
 3. **Always validate character readiness** before starting gameplay
-4. **Use knowledge tools** to provide accurate D&D information
-5. **Update character data immediately** when changes occur
-6. **Log important events** for session continuity
+4. **Check previous session logs** when resuming to ensure continuity
+5. **Use knowledge tools** to provide accurate D&D information
+6. **Update character data immediately** when changes occur
+7. **Log location/scene changes immediately** after using manage_game_state
+8. **Log important events** for session continuity
+
+### Session Continuity
+**When starting a conversation:**
+1. Check recent session logs with previous events
+2. Reference last known location and scene from manage_game_state(session_name, "get_state")
+3. Acknowledge recent character actions or story developments
+4. Set scene based on where the story left off
 
 ### Character Management
 TBF
