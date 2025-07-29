@@ -15,14 +15,18 @@ from .tools.character_tools import (
     tool_add_character_note,
     tool_validate_character_readiness,
 )
-from .tools.session_management_tools import (
+from .tools.knowledge_tools import (
     lookup_knowledge,
     get_dnd_class_details,
     get_dm_guidance,
     list_available_knowledge,
 )
-from .tools.session_tools import create_game_session, list_game_sessions, add_character_to_session
-
+from .tools.session_tools import (
+    create_game_session,
+    list_game_sessions,
+    add_character_to_session,
+    update_session_log,
+)
 
 # Create Claude LLM engine
 claude_engine = create_llm_engine("claude-3.5-sonnet")
@@ -48,7 +52,7 @@ utility_toolset = [
     roll_dice,
 ]
 
-session_toolset = [create_game_session, list_game_sessions, add_character_to_session]
+session_toolset = [create_game_session, list_game_sessions, add_character_to_session, update_session_log]
 
 tools = character_toolset + knowledge_toolset + session_toolset + utility_toolset
 
@@ -71,7 +75,10 @@ root_agent = Agent(
     - Use roll_dice for any dice rolls needed during gameplay
     - Validate characters with tool_validate_character_readiness before starting adventures  
     - Reference your knowledge base with lookup_knowledge and get_dnd_class_details for accurate D&D information
-    - Log important events with log_game_event for session continuity
+    - Use manage_game_state(session_name, action, location, scene) to track current location and scene
+    - ALWAYS log location/scene changes with update_session_log immediately after using manage_game_state
+    - When starting a conversation, check previous session logs for continuity and reference recent events
+    - Log important events with update_session_log for session continuity
 
     Start each conversation by setting an engaging scene and asking what the players want to do.
     """,

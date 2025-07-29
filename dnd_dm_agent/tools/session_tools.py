@@ -41,6 +41,7 @@ def create_game_session(session_name: str, dm_name: str = "DM") -> Dict[str, Any
             "session_notes": "",
             "current_location": "Starting Location",
             "current_scene": "The adventure begins...",
+            "history": [],
         }
 
         # Save metadata
