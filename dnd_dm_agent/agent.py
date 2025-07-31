@@ -18,6 +18,8 @@ from .tools.character_tools import (
 from .tools.knowledge_tools import (
     lookup_knowledge,
     get_dnd_class_details,
+    get_spell_details,
+    get_monster_details,
     get_dm_guidance,
     list_available_knowledge,
 )
@@ -43,6 +45,8 @@ character_toolset = [
 knowledge_toolset = [
     lookup_knowledge,
     get_dnd_class_details,
+    get_spell_details,
+    get_monster_details,
     get_dm_guidance,
     list_available_knowledge,
 ]

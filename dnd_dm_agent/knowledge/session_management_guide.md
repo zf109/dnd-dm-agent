@@ -115,15 +115,82 @@ Use the individual character management functions for all character operations:
 
 ## 🧠 Knowledge Access & Rules
 
-### Dynamic Knowledge Tools
+### Knowledge Base Organization
 
-#### `lookup_knowledge(query, specific_files=None)`
-- Search for D&D rules, mechanics, or general information
-- Examples: `lookup_knowledge("advantage")`, `lookup_knowledge("Fighter", ["classes_5e"])`
+The knowledge base is organized in folders for efficient searching:
+
+```
+knowledge/
+├── player_handbook/
+│   ├── spells/
+│   │   ├── level_0_cantrips.md
+│   │   ├── level_1_spells.md
+│   │   └── ...
+│   └── classes/
+├── monster_manual/
+│   ├── low_cr_monsters.md
+│   ├── dragons.md
+│   └── ...
+├── classes_5e.md
+├── session_management_guide.md
+└── character_sheet_template.md
+```
+
+### Specialized Knowledge Tools
+
+#### `get_spell_details(spell_name)`
+- **Purpose**: Get detailed spell information from spell files only
+- **Coverage**: Searches all spell files (cantrips, level 1+)
+- **Examples**: 
+  - `get_spell_details("Fire Bolt")` - finds cantrip details
+  - `get_spell_details("Magic Missile")` - finds 1st level spell
+  - `get_spell_details("Cure Wounds")` - finds healing spell
+- **Returns**: `{"status": "success", "spell_name": "Fire Bolt", "information": [sections]}`
+
+#### `get_monster_details(monster_name)`
+- **Purpose**: Get detailed monster information from monster files only
+- **Coverage**: Searches all monster files (low CR, dragons, etc.)
+- **Examples**:
+  - `get_monster_details("Goblin")` - finds basic monster stats
+  - `get_monster_details("Red Dragon")` - finds dragon variants
+  - `get_monster_details("Owlbear")` - finds specific creatures
+- **Returns**: `{"status": "success", "monster_name": "Goblin", "information": [sections]}`
 
 #### `get_dnd_class_details(class_name)`
-- Get comprehensive class information and features
-- Examples: `get_dnd_class_details("Wizard")`, `get_dnd_class_details("Rogue")`
+- **Purpose**: Get comprehensive class information and features
+- **Coverage**: Searches classes_5e.md file only
+- **Examples**: `get_dnd_class_details("Wizard")`, `get_dnd_class_details("Rogue")`
+- **Returns**: `{"status": "success", "class_name": "Wizard", "information": [sections]}`
+
+### General Search Tool
+
+#### `lookup_knowledge(query, specific_files=None)`
+- **Purpose**: Search across ALL knowledge files when category is unclear
+- **Regex Support**: Supports regex patterns for advanced searches
+- **Case Insensitive**: Automatically handles case variations
+- **Examples**:
+  - `lookup_knowledge("advantage")` - general rule search
+  - `lookup_knowledge("1d[0-9]+")` - find all dice notation patterns
+  - `lookup_knowledge("fire.*damage")` - regex pattern for fire damage
+  - `lookup_knowledge("Fighter", ["classes_5e"])` - search specific files
+- **Returns**: `{"status": "success", "query": "...", "results": [{"file": "...", "sections": [...]}]}`
+
+### Advanced Search Patterns
+
+**Common Regex Patterns for DMs:**
+- `"1d[0-9]+"` - Find dice notation (1d6, 1d10, etc.)
+- `".*fire.*"` - Find anything fire-related
+- `"CR [0-9]+"` - Find creatures by Challenge Rating
+- `"[0-9]+-level"` - Find spells by level
+- `"(advantage|disadvantage)"` - Find advantage/disadvantage rules
+
+**Effective Search Tips:**
+- Use specific functions first: `get_spell_details("Fireball")` vs `lookup_knowledge("Fireball")`
+- Use regex for patterns: damage types, spell levels, CR ranges
+- Try different term variations: "Fire Bolt" vs "fire bolt" vs "firebolt"
+- Search specific files when you know the category
+
+### Administrative Tools
 
 #### `get_dm_guidance(topic=None)`
 - Access session management tips and best practices
