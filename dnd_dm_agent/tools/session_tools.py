@@ -157,6 +157,37 @@ def update_session_log(session_name: str, log_entry: str) -> Dict[str, Any]:
         return {"status": "error", "error_message": f"Failed to update session log: {str(e)}"}
 
 
+def get_session_log(session_name: str) -> Dict[str, Any]:
+    """Get the session log for reading previous session history.
+
+    Args:
+        session_name: Name of the game session
+
+    Returns:
+        Dictionary with session log content
+    """
+    try:
+        session_path = SESSIONS_DIR / session_name
+        if not session_path.exists():
+            return {"status": "error", "error_message": f"Session '{session_name}' does not exist"}
+
+        log_path = session_path / "session_log.md"
+        if not log_path.exists():
+            return {"status": "error", "error_message": f"Session log for '{session_name}' does not exist"}
+
+        with open(log_path, "r") as f:
+            content = f.read()
+
+        return {
+            "status": "success",
+            "session_name": session_name,
+            "content": content
+        }
+
+    except Exception as e:
+        return {"status": "error", "error_message": f"Failed to get session log: {str(e)}"}
+
+
 def add_character_to_session(session_name: str, character_name: str) -> Dict[str, Any]:
     """Add a character to the session metadata.
 
