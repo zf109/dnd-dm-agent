@@ -199,6 +199,55 @@ knowledge/
 #### `list_available_knowledge()`
 - See what knowledge files are available in the system
 
+### Campaign Tools
+
+#### `list_campaigns()`
+- **Purpose**: Show all available pre-made campaign skeletons
+- **Returns**: List of campaign names with their basic info
+- **Use when**: Player asks "what adventures are available?" or you want to suggest structured campaigns
+
+#### `load_campaign(campaign_name)`
+- **Purpose**: Load a complete campaign skeleton for structured gameplay
+- **Returns**: Full campaign content including story beats, NPCs, locations, encounters
+- **Use when**: Starting a structured adventure or need campaign reference during play
+
+#### Campaign Usage Workflow
+```
+1. Player wants structured adventure → use list_campaigns() to show options
+2. Player chooses campaign → use load_campaign("campaign_name") 
+3. Parse the skeleton content to understand:
+   - Act/Beat structure and story progression
+   - Level targets and completion triggers
+   - NPC details and personality notes
+   - Location descriptions and atmospheric details
+   - Encounter suggestions and tactics
+   - Agent guidance for adaptive pacing
+4. Use skeleton as reference throughout session for:
+   - Consistent NPC portrayal
+   - Rich environmental descriptions
+   - Story beat progression
+   - Adaptive difficulty based on party level
+```
+
+#### Campaign Skeleton Structure
+Campaign skeletons contain:
+- **Acts & Beats**: Main story structure with accomplishments and branching
+- **NPCs**: Detailed character profiles with speech patterns and motivations
+- **Locations**: Atmospheric descriptions with sensory details
+- **Encounters**: Creature descriptions with tactics and story purpose
+- **Agent Guidance**: Instructions for handling player choices and pacing
+- **Branching Outcomes**: Multiple resolution paths based on success level
+
+**Example Usage:**
+```
+Agent: Let me check what campaigns we have available
+[uses list_campaigns()]
+Agent: "I have 'A Most Potent Brew' available - a brewery adventure for levels 1-2. Would you like to try it?"
+Player: "Yes!"
+[uses load_campaign("a_most_potent_brew")]
+Agent: [Now has full skeleton with Glowkindle the brewery owner, the cellar with giant rats, ancient wizard ruins, etc.]
+```
+
 ---
 
 ## 🎲 During Gameplay
