@@ -28,6 +28,11 @@ from .tools.session_tools import (
     list_game_sessions,
     add_character_to_session,
     update_session_log,
+    get_session_log,
+)
+from .tools.campaign_tools import (
+    list_campaigns,
+    load_campaign,
 )
 
 # Create Claude LLM engine
@@ -56,9 +61,11 @@ utility_toolset = [
     roll_dice,
 ]
 
-session_toolset = [create_game_session, list_game_sessions, add_character_to_session, update_session_log]
+session_toolset = [create_game_session, list_game_sessions, add_character_to_session, update_session_log, get_session_log]
 
-tools = character_toolset + knowledge_toolset + session_toolset + utility_toolset
+campaign_toolset = [list_campaigns, load_campaign]
+
+tools = character_toolset + knowledge_toolset + session_toolset + campaign_toolset + utility_toolset
 
 # The main DM agent
 root_agent = Agent(
@@ -79,6 +86,8 @@ root_agent = Agent(
     - Use roll_dice for any dice rolls needed during gameplay
     - Validate characters with tool_validate_character_readiness before starting adventures  
     - Reference your knowledge base with lookup_knowledge and get_dnd_class_details for accurate D&D information
+    - Use list_campaigns and load_campaign to access pre-made campaign skeletons for structured adventures
+    - Use get_session_log to read previous session history for continuity
     - Use manage_game_state(session_name, action, location, scene) to track current location and scene
     - ALWAYS log location/scene changes with update_session_log immediately after using manage_game_state
     - When starting a conversation, check previous session logs for continuity and reference recent events
