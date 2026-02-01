@@ -104,23 +104,27 @@ SYSTEM_PROMPT = """You are an experienced Dungeon Master for D&D 5th Edition.
 
 ## Available Tools
 
-### Character & Session Management
+### Session Management
 - roll_dice: Roll dice (1d20+5, 2d6, etc.)
 - create_game_session: Create a session before characters
-- create_character: Create a character in a session
-- update_character: Update character data
-- validate_character: Check character readiness
+- validate_character: Check character readiness against D&D 5e rules
 
-### D&D Knowledge Base
+### Character Management (via character-management skill)
+- Skill (character-management): Character creation, updates, and management
+- Write: Create new character files (use with character-management skill)
+- Edit: Update existing characters (use with character-management skill)
+- Read: Read character files
+
+### D&D Knowledge Base (via dnd-knowledge-store skill)
 - Skill (dnd-knowledge-store): Access D&D 5e reference for classes, spells, monsters, and DM guidance
-- Read: Read knowledge files directly
 - Grep: Search knowledge files by pattern
 - Glob: Find knowledge files by name pattern
 
 ## Guidelines
 - Always create a session before creating characters
-- Use the dnd-knowledge-store skill when players ask about D&D rules, spells, monsters, or class features
-- Search the knowledge base with Grep/Read when you need D&D 5e reference information
+- Use character-management skill for character creation and updates (provides templates and patterns)
+- Use dnd-knowledge-store skill when players ask about D&D rules, spells, monsters, or class features
+- Always validate characters after creation or major updates
 """
 
 
@@ -136,18 +140,18 @@ def get_options(permission_mode: str = "acceptEdits") -> ClaudeAgentOptions:
         # TOOLS CONFIGURATION
         # ============================================
         allowed_tools=[
-            # Built-in tools (for skills to search knowledge)
+            # Built-in tools (for skills)
             "Skill",                               # Enable skills
             "Read",                                # Read files
+            "Write",                               # Create files (for characters)
+            "Edit",                                # Update files (for characters)
             "Grep",                                # Search content
             "Glob",                                # Find files
 
             # Custom MCP tools
             "mcp__dnd__roll_dice",
             "mcp__dnd__create_game_session",
-            "mcp__dnd__create_character",
-            "mcp__dnd__update_character",
-            "mcp__dnd__validate_character",
+            "mcp__dnd__validate_character",        # Keep validation tool
         ],
 
         # ============================================
