@@ -15,19 +15,19 @@ This skill enables you to manage D&D 5e characters using markdown files and buil
 | **Create character** | Write | [character_template.md](character_template.md), [character_example.md](character_example.md) |
 | **Get character** | Read | - |
 | **Update character** | Read + Edit | [edit_examples.md](edit_examples.md) |
-| **Validate character** | validate_character tool | [validation_rules.md](validation_rules.md) |
+| **Validate character** | Read | [validation_rules.md](validation_rules.md) |
 
 ## Character File Location
 
 All character files are stored as markdown:
 ```
-game_sessions/[session_name]/characters/[character_name].md
+campaigns/[campaign_instance]/characters/[character_name].md
 ```
 
 **Example:**
 ```
-game_sessions/test_session/characters/thork.md
-game_sessions/test_session/characters/elara.md
+campaigns/a_most_potent_brew_party1/characters/thork.md
+campaigns/a_most_potent_brew_party1/characters/elara.md
 ```
 
 ---
@@ -53,7 +53,7 @@ You need (minimum):
 
 ```
 Write(
-  file_path="game_sessions/[session]/characters/[name].md",
+  file_path="campaigns/[instance]/characters/[name].md",
   content=[filled-out template based on character_template.md]
 )
 ```
@@ -61,7 +61,7 @@ Write(
 **Example:**
 ```
 Write(
-  file_path="game_sessions/session1/characters/thork.md",
+  file_path="campaigns/a_most_potent_brew_party1/characters/thork.md",
   content="# Thork Ironforge - Level 1 Dwarf Fighter\n\n..."
 )
 ```
@@ -69,11 +69,10 @@ Write(
 ### Step 4: Validate
 
 After creating:
-```
-validate_character(session_name="session1", character_name="thork")
-```
-
-Fix any errors reported, then validate again until character is valid.
+1. Read the character file
+2. Check against [validation_rules.md](validation_rules.md)
+3. Fix any issues found
+4. Re-check until character is valid
 
 ---
 
@@ -82,7 +81,7 @@ Fix any errors reported, then validate again until character is valid.
 Use the Read tool:
 
 ```
-Read(file_path="game_sessions/[session]/characters/[name].md")
+Read(file_path="campaigns/[instance]/characters/[name].md")
 ```
 
 **When to read:**
@@ -162,38 +161,20 @@ Append to notes section with new information.
 
 ### How to Validate
 
-Use the `validate_character` tool:
+To validate a character:
 
-```
-validate_character(
-  session_name="session1",
-  character_name="thork"
-)
-```
-
-### Understanding Validation Output
-
-**Valid character:**
-```json
-{
-  "valid": true,
-  "message": "Character is ready for adventure!"
-}
-```
-
-**Invalid character:**
-```json
-{
-  "valid": false,
-  "errors": [
-    "HP cannot be negative (current: -5)",
-    "Missing required field: Character class"
-  ],
-  "warnings": [
-    "AC seems low for a Fighter"
-  ]
-}
-```
+1. **Read the character file** using the Read tool
+2. **Check against [validation_rules.md](validation_rules.md)**
+3. **Verify all required fields** are present:
+   - Character name, class, level, race
+   - All 6 ability scores
+   - HP (current/max), AC, hit dice
+4. **Check D&D rules**:
+   - HP: 0 ≤ current ≤ max
+   - Ability scores: typically 8-20
+   - Proficiency bonus matches level
+   - Class features match level
+5. **Report any issues** found
 
 ### Validation Rules
 
@@ -239,17 +220,17 @@ Search for Fighter and Dwarf information
 **Step 5: Write character file**
 ```
 Write(
-  file_path="game_sessions/session1/characters/thork.md",
+  file_path="campaigns/a_most_potent_brew_party1/characters/thork.md",
   content=[Use character_template.md and fill in all values]
 )
 ```
 
 **Step 6: Validate**
-```
-validate_character(session_name="session1", character_name="thork")
-```
+1. Read the created character file
+2. Check against [validation_rules.md](validation_rules.md)
+3. Verify all required fields are present and valid
 
-**Step 7: Fix any errors and re-validate**
+**Step 7: Fix any errors and re-check**
 
 ---
 
@@ -326,20 +307,20 @@ Reference for:
 - Spell descriptions
 - Equipment stats
 
-### create_game_session Tool
-Creates session directory where characters are stored.
+### create_campaign_instance Tool
+Creates campaign instance directory where characters are stored.
 
 ---
 
 ## Troubleshooting
 
 ### Problem: "File not found"
-**Solution:** Ensure session exists and character name is correct. Path format: `game_sessions/[session]/characters/[name].md`
+**Solution:** Ensure campaign instance exists and character name is correct. Path format: `campaigns/[instance]/characters/[name].md`
 
 ### Problem: "Edit failed - old_string not found"
 **Solution:** Read the file first. Ensure old_string matches exactly (including spacing/formatting).
 
-### Problem: "Validation failed - HP negative"
+### Problem: "HP is negative"
 **Solution:** HP minimum is 0. Character is unconscious, not dead (death is at failed death saves).
 
 ### Problem: "Character has wrong features for level"
@@ -349,11 +330,11 @@ Creates session directory where characters are stored.
 
 ## Summary
 
-**Creating:** Write + character_template.md + validate
+**Creating:** Write + character_template.md + Read (to verify)
 **Reading:** Read
-**Updating:** Read + Edit + edit_examples.md + validate
-**Validating:** validate_character tool + validation_rules.md
+**Updating:** Read + Edit + edit_examples.md
+**Validating:** Read character + check against validation_rules.md
 
-**Key principle:** Markdown files + built-in tools + validation = complete character management system
+**Key principle:** Markdown files + built-in tools (Read/Write/Edit) = complete character management system
 
-No custom create/update tools needed! The combination of skills and built-in tools provides everything necessary for robust D&D character management.
+No custom create/update/validate tools needed! The combination of markdown files and built-in tools provides everything necessary for robust D&D character management.

@@ -17,9 +17,6 @@ PROJECT_ROOT = str(Path(__file__).parent.parent.resolve())
 # Import domain logic from existing tools
 from .tools.utility_tools import roll_dice as _roll_dice
 from .tools.campaign_instance_tools import create_campaign_instance as _create_campaign_instance
-from .tools.character_tools.character_validation import (
-    tool_validate_character_readiness as _tool_validate_character_readiness,
-)
 
 
 # =============================================================================
@@ -43,20 +40,11 @@ async def create_campaign_instance(args: dict[str, Any]) -> dict[str, Any]:
     return {"content": [{"type": "text", "text": str(result)}]}
 
 
-@tool("validate_character", "Check if character is ready for adventure", {"campaign_instance": str, "character_name": str})
-async def validate_character(args: dict[str, Any]) -> dict[str, Any]:
-    result = _tool_validate_character_readiness(
-        session_name=args["campaign_instance"],
-        character_name=args["character_name"],
-    )
-    return {"content": [{"type": "text", "text": str(result)}]}
-
-
 # MCP server with custom tools
 dnd_tools = create_sdk_mcp_server(
     name="dnd",
     version="1.0.0",
-    tools=[roll_dice, create_campaign_instance, validate_character],
+    tools=[roll_dice, create_campaign_instance],
 )
 
 
@@ -78,7 +66,6 @@ SYSTEM_PROMPT = """You are an experienced Dungeon Master for D&D 5th Edition.
 - Write: Create new character files (use with character-management skill)
 - Edit: Update existing characters (use with character-management skill)
 - Read: Read character files
-- validate_character: Check character readiness against D&D 5e rules
 
 ### D&D Knowledge Base (via dnd-knowledge-store skill)
 - Skill (dnd-knowledge-store): Access D&D 5e reference for classes, spells, monsters, and DM guidance
@@ -90,7 +77,6 @@ SYSTEM_PROMPT = """You are an experienced Dungeon Master for D&D 5th Edition.
 - Use character-management skill for character creation and updates (provides templates and patterns)
 - Characters belong to campaign instances (stored in campaigns/[instance]/characters/)
 - Use dnd-knowledge-store skill when players ask about D&D rules, spells, monsters, or class features
-- Always validate characters after creation or major updates
 - Track campaign progress through Acts and Beats
 """
 
@@ -118,7 +104,6 @@ def get_options(permission_mode: str = "acceptEdits") -> ClaudeAgentOptions:
             # Custom MCP tools
             "mcp__dnd__roll_dice",
             "mcp__dnd__create_campaign_instance",
-            "mcp__dnd__validate_character",
         ],
 
         # ============================================

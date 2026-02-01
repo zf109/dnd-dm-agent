@@ -31,10 +31,8 @@ old_string: "| **Hit Points** | 12 / 12 | Hit Die: d10 |"
 new_string: "| **Hit Points** | 7 / 12 | Hit Die: d10 |"
 ```
 
-**Step 4: Validate**
-```
-validate_character session_name="session1" character_name="thork"
-```
+**Step 4: Verify**
+Read the character file to verify the change was applied correctly.
 
 ---
 
@@ -94,10 +92,8 @@ old_string: "- **Second Wind:** As a bonus action, regain 1d10+1 hit points once
 new_string: "- **Second Wind:** As a bonus action, regain 1d10+2 hit points once per short or long rest\n- **Action Surge:** Once per short or long rest, take one additional action on your turn"
 ```
 
-**Then validate:**
-```
-validate_character session_name="session1" character_name="thork"
-```
+**Then verify:**
+Read the character file to verify all changes were applied correctly.
 
 ---
 
@@ -209,14 +205,14 @@ new_string: "| **Hit Points** | 7 / 12 | Hit Die: d10 |"
 
 ---
 
-### ❌ DON'T: Forget to validate
+### ❌ DON'T: Forget to verify
 ```
 Edit → Done
 ```
 
-### ✅ DO: Always validate after edits
+### ✅ DO: Always verify after edits
 ```
-Edit → validate_character → Check for errors
+Edit → Read character → Check changes applied correctly
 ```
 
 ---
@@ -237,7 +233,7 @@ GP: 0        (Minimum currency is 0)
 
 ---
 
-## Validation Checklist
+## Verification Checklist
 
 After every edit, check:
 - [ ] HP is between 0 and maximum
@@ -248,4 +244,4 @@ After every edit, check:
 - [ ] Equipment changes make sense (can't use items not owned)
 - [ ] Level-appropriate features and abilities
 
-Run `validate_character` to automate these checks!
+Reference [validation_rules.md](validation_rules.md) for complete D&D 5e rules!

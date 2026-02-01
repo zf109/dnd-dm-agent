@@ -1,6 +1,6 @@
 # Character Validation Rules
 
-This document explains what the `validate_character` tool checks when validating a D&D 5e character.
+This document explains the D&D 5e rules to check when validating a character. Use these rules as a reference when reading and reviewing character files.
 
 ## Required Fields
 
@@ -199,42 +199,38 @@ Carrying Capacity = STR score × 15 lbs
 
 ## Validation Workflow
 
-When `validate_character` is called:
+When validating a character:
 
-1. **Read character file**
+1. **Read character file** using the Read tool
 2. **Check required fields** - Are all mandatory fields present?
 3. **Validate ranges** - Are all values within acceptable ranges?
 4. **Check calculations** - Are modifiers calculated correctly?
 5. **Verify D&D rules** - Does character follow 5e rules?
-6. **Return detailed errors** - List all issues found
+6. **Report any issues** - List all problems found
 
-## Example Validation Output
+## Example Validation Report
 
 ### Valid Character:
-```json
-{
-  "valid": true,
-  "character_name": "Thork Ironforge",
-  "level": 1,
-  "class": "Fighter",
-  "message": "Character is ready for adventure!"
-}
+```
+✅ Thork Ironforge (Level 1 Fighter)
+- All required fields present
+- All values within valid ranges
+- Class features correct for level
+- Character is ready for adventure!
 ```
 
 ### Invalid Character:
-```json
-{
-  "valid": false,
-  "errors": [
-    "HP cannot be negative (current: -5)",
-    "Ability score STR is 22 (max is 20 at level 1)",
-    "Missing required field: Character class"
-  ],
-  "warnings": [
-    "AC seems low for a Fighter (current: 10, expected 14+)",
-    "No equipment listed - character may need gear"
-  ]
-}
+```
+❌ Character validation issues found:
+
+Errors:
+- HP cannot be negative (current: -5) - set to 0 minimum
+- Ability score STR is 22 (max is 20 at level 1) - reduce to 20
+- Missing required field: Character class - add to basic info
+
+Warnings:
+- AC seems low for a Fighter (current: 10, expected 14+)
+- No equipment listed - character may need gear
 ```
 
 ---
@@ -294,13 +290,15 @@ However, for player characters in active play, **always validate** before starti
 
 ---
 
-## Validation Command
+## How to Validate
 
-```
-validate_character(session_name="session1", character_name="thork")
-```
+To validate a character:
+1. Use the **Read** tool to open the character file
+2. Check each section against the rules in this document
+3. Report any errors or warnings found
+4. Suggest fixes for any issues
 
-Returns detailed validation report with:
+Provide a detailed validation report with:
 - ✅ Valid/Invalid status
 - 🚨 Errors that must be fixed
 - ⚠️  Warnings about potential issues
