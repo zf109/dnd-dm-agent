@@ -56,22 +56,61 @@ Existing data in `campaigns/`, `game_sessions/*/characters/` remains unchanged. 
 - [x] Migrate `tool_validate_character_readiness`
 - [x] Migrate `create_game_session`
 
-### Phase 4: Campaign Skill System
-- [ ] Design campaign loading mechanism (inject into system prompt)
-- [ ] Test with existing campaign (`test_campaign/`)
-- [ ] Update system prompt to guide agent on file access patterns
+### Phase 4: Campaign Skill System ✅
+- [x] Create campaign-guide skill
+- [x] Move campaigns to available_campaigns/
+- [x] Split campaign into modular files (guide, npcs, locations, encounters)
+- [x] Add pre-generated characters (Thork, Elara, Sapphire Star)
+- [x] Document expected campaign structure in SKILL.md
+- [ ] Test campaign loading (pending directory refactor)
+
+### Phase 4.5: Skills System ✅ (Completed beyond original plan)
+- [x] Create dnd-knowledge-store skill (D&D 5e rules)
+- [x] Create character-management skill (markdown-based characters)
+- [x] Create campaign-guide skill (campaign instances & progress tracking)
+- [x] Enable skills in agent (setting_sources, cwd, allowed_tools)
+- [x] Reduce character tools from 5 → 1 (keep validate_character only)
 
 ### Phase 5: Update Tests (In Progress)
 - [ ] Update test fixtures for new SDK patterns
 - [ ] Verify custom tool tests pass
-- [x] Add integration tests for agent loop (initial test added: `test_agent_dice_roll`)
+- [x] Add integration tests for agent loop (dice roll)
+- [x] Add integration tests for knowledge skill (classes, spells, comparison)
+- [x] Add integration test for character management (create wizard)
+- [ ] Update tests for directory refactor (game_sessions → campaigns)
+
+### Phase 5.5: Directory Structure Refactor (Pending)
+**Goal:** Align with D&D community patterns (characters at campaign level, not session level)
+
+**Current (problematic):**
+```
+game_sessions/[session_name]/characters/  # Characters tied to sessions
+```
+
+**Target (correct):**
+```
+campaigns/[campaign_name]_[instance]/
+  ├── characters/         # Characters persist across sessions
+  ├── campaign_progress.md
+  └── sessions/
+      ├── session_01.md
+      └── session_02.md
+```
+
+**Tasks:**
+- [ ] Rename `create_game_session` tool → `create_campaign`
+- [ ] Update tool to create campaign structure (characters/ + sessions/)
+- [ ] Update character-management skill paths (game_sessions → campaigns)
+- [ ] Update all integration tests
+- [ ] Update CLAUDE.md
 
 ### Phase 6: Clean Up
-- [ ] Remove `google-adk` dependency
-- [ ] Remove `litellm` dependency
+- [x] Remove `google-adk` dependency (done in pyproject.toml)
+- [x] Remove `litellm` dependency (done in pyproject.toml)
 - [ ] Remove old `config/llm_engine.py`
-- [ ] Remove deprecated tool files
-- [ ] Update CLAUDE.md with new commands
+- [ ] Remove deprecated tool files (knowledge_tools.py, old character tools)
+- [ ] Remove old character tool wrappers from claude_agent.py
+- [x] Update CLAUDE.md with new commands (partially done)
 - [ ] Update README if applicable
 
 ---

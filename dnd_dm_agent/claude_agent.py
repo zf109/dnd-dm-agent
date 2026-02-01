@@ -16,11 +16,7 @@ PROJECT_ROOT = str(Path(__file__).parent.parent.resolve())
 
 # Import domain logic from existing tools
 from .tools.utility_tools import roll_dice as _roll_dice
-from .tools.session_tools import create_game_session as _create_game_session
-from .tools.character_tools.character_tools import (
-    tool_create_character as _tool_create_character,
-    tool_update_character as _tool_update_character,
-)
+from .tools.campaign_instance_tools import create_campaign_instance as _create_campaign_instance
 from .tools.character_tools.character_validation import (
     tool_validate_character_readiness as _tool_validate_character_readiness,
 )
@@ -37,52 +33,20 @@ async def roll_dice(args: dict[str, Any]) -> dict[str, Any]:
     return {"content": [{"type": "text", "text": str(result)}]}
 
 
-@tool("create_game_session", "Create a new game session", {"session_name": str, "dm_name": str})
-async def create_game_session(args: dict[str, Any]) -> dict[str, Any]:
-    result = _create_game_session(args["session_name"], args.get("dm_name", "DM"))
-    return {"content": [{"type": "text", "text": str(result)}]}
-
-
 @tool(
-    "create_character",
-    "Create a D&D 5e character",
-    {
-        "session_name": str,
-        "character_name": str,
-        "character_class": str,
-        "race": str,
-        "level": int,
-    },
+    "create_campaign_instance",
+    "Create a new campaign instance from a template",
+    {"campaign_template": str, "instance_name": str}
 )
-async def create_character(args: dict[str, Any]) -> dict[str, Any]:
-    result = _tool_create_character(
-        session_name=args["session_name"],
-        character_name=args["character_name"],
-        character_class=args.get("character_class"),
-        race=args.get("race"),
-        level=args.get("level", 1),
-    )
-    if result is None:
-        return {"content": [{"type": "text", "text": "Failed to create character"}]}
+async def create_campaign_instance(args: dict[str, Any]) -> dict[str, Any]:
+    result = _create_campaign_instance(args["campaign_template"], args["instance_name"])
     return {"content": [{"type": "text", "text": str(result)}]}
 
 
-@tool("update_character", "Update a character", {"session_name": str, "character_name": str, "updates": dict})
-async def update_character(args: dict[str, Any]) -> dict[str, Any]:
-    result = _tool_update_character(
-        session_name=args["session_name"],
-        character_name=args["character_name"],
-        updates=args["updates"],
-    )
-    if result is None:
-        return {"content": [{"type": "text", "text": "Failed to update character"}]}
-    return {"content": [{"type": "text", "text": str(result)}]}
-
-
-@tool("validate_character", "Check if character is ready for adventure", {"session_name": str, "character_name": str})
+@tool("validate_character", "Check if character is ready for adventure", {"campaign_instance": str, "character_name": str})
 async def validate_character(args: dict[str, Any]) -> dict[str, Any]:
     result = _tool_validate_character_readiness(
-        session_name=args["session_name"],
+        session_name=args["campaign_instance"],
         character_name=args["character_name"],
     )
     return {"content": [{"type": "text", "text": str(result)}]}
@@ -92,7 +56,7 @@ async def validate_character(args: dict[str, Any]) -> dict[str, Any]:
 dnd_tools = create_sdk_mcp_server(
     name="dnd",
     version="1.0.0",
-    tools=[roll_dice, create_game_session, create_character, update_character, validate_character],
+    tools=[roll_dice, create_campaign_instance, validate_character],
 )
 
 
@@ -104,16 +68,17 @@ SYSTEM_PROMPT = """You are an experienced Dungeon Master for D&D 5th Edition.
 
 ## Available Tools
 
-### Session Management
+### Campaign Management
 - roll_dice: Roll dice (1d20+5, 2d6, etc.)
-- create_game_session: Create a session before characters
-- validate_character: Check character readiness against D&D 5e rules
+- create_campaign_instance: Create a campaign instance from a template
+- Skill (campaign-guide): Load campaigns, track progress through Acts/Beats, manage pre-generated characters
 
 ### Character Management (via character-management skill)
 - Skill (character-management): Character creation, updates, and management
 - Write: Create new character files (use with character-management skill)
 - Edit: Update existing characters (use with character-management skill)
 - Read: Read character files
+- validate_character: Check character readiness against D&D 5e rules
 
 ### D&D Knowledge Base (via dnd-knowledge-store skill)
 - Skill (dnd-knowledge-store): Access D&D 5e reference for classes, spells, monsters, and DM guidance
@@ -121,10 +86,12 @@ SYSTEM_PROMPT = """You are an experienced Dungeon Master for D&D 5th Edition.
 - Glob: Find knowledge files by name pattern
 
 ## Guidelines
-- Always create a session before creating characters
+- Use campaign-guide skill to list available campaigns and create campaign instances
 - Use character-management skill for character creation and updates (provides templates and patterns)
+- Characters belong to campaign instances (stored in campaigns/[instance]/characters/)
 - Use dnd-knowledge-store skill when players ask about D&D rules, spells, monsters, or class features
 - Always validate characters after creation or major updates
+- Track campaign progress through Acts and Beats
 """
 
 
@@ -150,8 +117,8 @@ def get_options(permission_mode: str = "acceptEdits") -> ClaudeAgentOptions:
 
             # Custom MCP tools
             "mcp__dnd__roll_dice",
-            "mcp__dnd__create_game_session",
-            "mcp__dnd__validate_character",        # Keep validation tool
+            "mcp__dnd__create_campaign_instance",
+            "mcp__dnd__validate_character",
         ],
 
         # ============================================
