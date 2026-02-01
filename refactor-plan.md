@@ -3,6 +3,37 @@
 ## Goal
 Migrate from `google-adk` + `litellm` to Anthropic's Claude Agent SDK for better agent capabilities and simpler dependencies.
 
+## Design Decisions
+
+### Simplified Architecture
+- **Use built-in file tools** instead of custom knowledge/session lookup wrappers
+- **Keep only essential custom tools** that have domain logic (dice rolling, character validation)
+- **Campaign as loadable skill** - campaign content injected into system prompt, no campaign-specific code
+
+### Tool Reduction: 20 → ~5 custom tools
+
+**Keep (custom logic required):**
+- `roll_dice` - dice notation parsing
+- `tool_create_character` - D&D character schema initialization
+- `tool_update_character` - deep merge with schema validation
+- `tool_validate_character_readiness` - domain validation rules
+- `create_game_session` - folder structure + metadata initialization
+
+**Remove (replaced by built-in file tools):**
+- All 6 knowledge tools → agent reads `knowledge/` directly
+- `get_session_log`, `list_game_sessions` → agent reads `game_sessions/` directly
+- `list_campaigns`, `load_campaign` → agent reads `campaigns/` directly
+- `tool_get_character` → agent reads character JSON directly
+- `tool_add_character_note` → use `tool_update_character`
+- `add_character_to_session` → agent updates metadata JSON directly
+- `update_session_log` → agent appends to session_log.md directly
+- `manage_game_state` → agent updates metadata JSON directly
+
+### Data Compatibility
+Existing data in `campaigns/`, `game_sessions/*/characters/` remains unchanged. Only the access pattern changes.
+
+---
+
 ## Checklist
 
 ### Phase 1: Audit Current Tools ✅
@@ -14,31 +45,32 @@ Migrate from `google-adk` + `litellm` to Anthropic's Claude Agent SDK for better
 - [x] Note any ADK-specific patterns that need migration
 
 ### Phase 2: Scaffold New Agent
-- [ ] Update `pyproject.toml` with `anthropic` dependency
-- [ ] Create new agent structure using Claude Agent SDK patterns
-- [ ] Set up tool registration mechanism
+- [x] Update `pyproject.toml` with `anthropic` dependency
+- [x] Create `dnd_dm_agent/claude_agent.py` with agent loop
+- [ ] Configure built-in file tools (deferred - knowledge will become skills)
 
-### Phase 3: Migrate Tools (Incrementally)
-- [ ] Migrate knowledge tools (6 tools)
-- [ ] Migrate utility tools (2 tools)
-- [ ] Migrate session tools (5 tools)
-- [ ] Migrate character tools (5 tools)
-- [ ] Migrate campaign tools (2 tools)
+### Phase 3: Migrate Custom Tools Only
+- [ ] Migrate `roll_dice`
+- [ ] Migrate `tool_create_character`
+- [ ] Migrate `tool_update_character`
+- [ ] Migrate `tool_validate_character_readiness`
+- [ ] Migrate `create_game_session`
 
-### Phase 4: Update Agent Definition
-- [ ] Port agent instructions from current `agent.py`
-- [ ] Configure model and parameters
-- [ ] Set up conversation/agentic loop
+### Phase 4: Campaign Skill System
+- [ ] Design campaign loading mechanism (inject into system prompt)
+- [ ] Test with existing campaign (`test_campaign/`)
+- [ ] Update system prompt to guide agent on file access patterns
 
 ### Phase 5: Update Tests
 - [ ] Update test fixtures for new SDK patterns
-- [ ] Verify all existing tests pass
+- [ ] Verify custom tool tests pass
 - [ ] Add integration tests for agent loop
 
 ### Phase 6: Clean Up
 - [ ] Remove `google-adk` dependency
 - [ ] Remove `litellm` dependency
 - [ ] Remove old `config/llm_engine.py`
+- [ ] Remove deprecated tool files
 - [ ] Update CLAUDE.md with new commands
 - [ ] Update README if applicable
 
