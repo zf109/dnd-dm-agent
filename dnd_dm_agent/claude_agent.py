@@ -126,13 +126,26 @@ def get_options(permission_mode: str = "acceptEdits") -> ClaudeAgentOptions:
 
 async def run(prompt: str) -> str:
     """Run agent with a prompt."""
+    from claude_agent_sdk import AssistantMessage, TextBlock
+    import uuid
+
     options = get_options()
     responses = []
 
-    async for message in query(prompt=prompt, options=options):
-        if hasattr(message, "content"):
+    # Use async generator to work around SDK bug with MCP servers
+    # See: https://github.com/anthropics/claude-agent-sdk-python/issues/266
+    async def prompt_generator():
+        yield {
+            "type": "user",
+            "message": {"role": "user", "content": prompt},
+            "parent_tool_use_id": None,
+            "session_id": str(uuid.uuid4()),
+        }
+
+    async for message in query(prompt=prompt_generator(), options=options):
+        if isinstance(message, AssistantMessage):
             for block in message.content:
-                if hasattr(block, "text"):
+                if isinstance(block, TextBlock):
                     responses.append(block.text)
 
     return "\n".join(responses)
