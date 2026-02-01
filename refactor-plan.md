@@ -44,27 +44,27 @@ Existing data in `campaigns/`, `game_sessions/*/characters/` remains unchanged. 
 - [x] Document all tool signatures from `campaign_tools.py`
 - [x] Note any ADK-specific patterns that need migration
 
-### Phase 2: Scaffold New Agent
+### Phase 2: Scaffold New Agent ✅
 - [x] Update `pyproject.toml` with `anthropic` dependency
 - [x] Create `dnd_dm_agent/claude_agent.py` with agent loop
-- [ ] Configure built-in file tools (deferred - knowledge will become skills)
+- [x] Configure built-in file tools (deferred - knowledge will become skills)
 
-### Phase 3: Migrate Custom Tools Only
-- [ ] Migrate `roll_dice`
-- [ ] Migrate `tool_create_character`
-- [ ] Migrate `tool_update_character`
-- [ ] Migrate `tool_validate_character_readiness`
-- [ ] Migrate `create_game_session`
+### Phase 3: Migrate Custom Tools Only ✅
+- [x] Migrate `roll_dice`
+- [x] Migrate `tool_create_character`
+- [x] Migrate `tool_update_character`
+- [x] Migrate `tool_validate_character_readiness`
+- [x] Migrate `create_game_session`
 
 ### Phase 4: Campaign Skill System
 - [ ] Design campaign loading mechanism (inject into system prompt)
 - [ ] Test with existing campaign (`test_campaign/`)
 - [ ] Update system prompt to guide agent on file access patterns
 
-### Phase 5: Update Tests
+### Phase 5: Update Tests (In Progress)
 - [ ] Update test fixtures for new SDK patterns
 - [ ] Verify custom tool tests pass
-- [ ] Add integration tests for agent loop
+- [x] Add integration tests for agent loop (initial test added: `test_agent_dice_roll`)
 
 ### Phase 6: Clean Up
 - [ ] Remove `google-adk` dependency

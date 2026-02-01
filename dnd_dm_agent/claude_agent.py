@@ -1,6 +1,7 @@
 """DnD Dungeon Master Agent using Claude Agent SDK."""
 
 import asyncio
+from pathlib import Path
 from typing import Any
 
 from claude_agent_sdk import (
@@ -9,6 +10,9 @@ from claude_agent_sdk import (
     tool,
     create_sdk_mcp_server,
 )
+
+# Project root directory (for skills and file operations)
+PROJECT_ROOT = str(Path(__file__).parent.parent.resolve())
 
 # Import domain logic from existing tools
 from .tools.utility_tools import roll_dice as _roll_dice
@@ -98,27 +102,62 @@ dnd_tools = create_sdk_mcp_server(
 
 SYSTEM_PROMPT = """You are an experienced Dungeon Master for D&D 5th Edition.
 
-## Tools
+## Available Tools
+
+### Character & Session Management
 - roll_dice: Roll dice (1d20+5, 2d6, etc.)
 - create_game_session: Create a session before characters
 - create_character: Create a character in a session
 - update_character: Update character data
 - validate_character: Check character readiness
 
-Always create a session before creating characters.
+### D&D Knowledge Base
+- Skill (dnd-knowledge-store): Access D&D 5e reference for classes, spells, monsters, and DM guidance
+- Read: Read knowledge files directly
+- Grep: Search knowledge files by pattern
+- Glob: Find knowledge files by name pattern
+
+## Guidelines
+- Always create a session before creating characters
+- Use the dnd-knowledge-store skill when players ask about D&D rules, spells, monsters, or class features
+- Search the knowledge base with Grep/Read when you need D&D 5e reference information
 """
 
 
 def get_options(permission_mode: str = "acceptEdits") -> ClaudeAgentOptions:
     return ClaudeAgentOptions(
-        mcp_servers={"dnd": dnd_tools},
+        # ============================================
+        # REQUIRED FOR SKILLS
+        # ============================================
+        cwd=PROJECT_ROOT,                          # Project root for skills discovery
+        setting_sources=["user", "project"],       # Load skills + CLAUDE.md
+
+        # ============================================
+        # TOOLS CONFIGURATION
+        # ============================================
         allowed_tools=[
+            # Built-in tools (for skills to search knowledge)
+            "Skill",                               # Enable skills
+            "Read",                                # Read files
+            "Grep",                                # Search content
+            "Glob",                                # Find files
+
+            # Custom MCP tools
             "mcp__dnd__roll_dice",
             "mcp__dnd__create_game_session",
             "mcp__dnd__create_character",
             "mcp__dnd__update_character",
             "mcp__dnd__validate_character",
         ],
+
+        # ============================================
+        # MCP SERVER
+        # ============================================
+        mcp_servers={"dnd": dnd_tools},
+
+        # ============================================
+        # OTHER SETTINGS
+        # ============================================
         system_prompt=SYSTEM_PROMPT,
         permission_mode=permission_mode,
     )
