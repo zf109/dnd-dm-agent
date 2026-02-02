@@ -49,20 +49,8 @@ uv run ruff format .
   - `knowledge/` - Classes, spells, monsters, DM guidance (moved from dnd_dm_agent/)
 - **`campaigns/`** - Campaign skeletons (Acts → Beats structure)
 
-### Data Flow
-1. Sessions created in `dnd_dm_agent/game_sessions/[session_name]/`
-2. Characters stored as JSON in session's `characters/` subdirectory
-3. Session logs tracked in `session_log.md` with timestamps
-4. Knowledge searched via recursive glob + regex pattern matching
 
-### Campaign Structure
-Campaigns use a two-level nesting: Acts (major story phases) → Beats (individual accomplishments). Stored in `campaigns/[name]/campaign_skeleton.md`.
 
-## Testing Patterns
-
-- Test files mirror tool modules: `test_knowledge_tools.py`, `test_character_tools.py`, etc.
-- Mock data uses `MOCK_*_CONTENT` constants
-- Knowledge tools tested with mock markdown content injected via monkeypatching
 
 ## Code Style
 
@@ -70,10 +58,3 @@ Campaigns use a two-level nesting: Acts (major story phases) → Beats (individu
 - Line length: 120 characters
 - Ruff for linting/formatting (E, F, W, I rules)
 - Double quotes, space indent
-
-## Key Behaviors
-
-- Always create a game session BEFORE character creation
-- Use `tool_validate_character_readiness` before starting adventures
-- Call `update_session_log` immediately after `manage_game_state` changes
-- Knowledge search uses case-insensitive regex across all markdown files in knowledge/
