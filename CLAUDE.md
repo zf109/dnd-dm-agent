@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-D&D DM Agent - An AI Dungeon Master assistant built with Claude Agent SDK. Single-agent architecture with 5 core custom tools for character management, dice rolling, and session tracking. D&D knowledge accessed via skills system.
+D&D DM Agent - An AI Dungeon Master assistant built with Claude Agent SDK. Single-agent architecture with 2 core custom tools for dice rolling and campaign management. Character management, D&D knowledge, and DM guidance accessed via skills system.
 
 ## Package Management
 
@@ -24,10 +24,10 @@ uv run python -m dnd_dm_agent.claude_agent "your prompt here"
 uv run pytest tests/
 
 # Run a single test file
-uv run pytest tests/test_knowledge_tools.py
+uv run pytest tests/test_utility_tools.py
 
 # Run a specific test
-uv run pytest tests/test_knowledge_tools.py::test_lookup_knowledge_finds_content
+uv run pytest tests/test_utility_tools.py::test_roll_dice_basic
 
 # Run integration tests (requires ANTHROPIC_API_KEY)
 uv run pytest tests/integration/
@@ -40,13 +40,16 @@ uv run ruff format .
 ## Architecture
 
 ### Core Structure
-- **`dnd_dm_agent/claude_agent.py`** - Main agent using Claude Agent SDK with 5 custom tools
-- **`dnd_dm_agent/tools/`** - Tool implementations (used by claude_agent.py):
-  - `character_tools/` - Character CRUD, validation, schema (D&D 5e character structure)
-  - `utility_tools.py` - Dice rolls, game state tracking
-- **`.claude/skills/dnd-knowledge-store/`** - D&D 5e knowledge skill with markdown references
-  - `knowledge/` - Classes, spells, monsters, DM guidance (moved from dnd_dm_agent/)
-- **`campaigns/`** - Campaign skeletons (Acts → Beats structure)
+- **`dnd_dm_agent/claude_agent.py`** - Main agent using Claude Agent SDK with 2 custom tools
+- **`dnd_dm_agent/tools/`** - Custom tool implementations:
+  - `utility_tools.py` - Dice rolls (`roll_dice`)
+  - `campaign_instance_tools.py` - Campaign instance creation (`create_campaign_instance`)
+- **`.claude/skills/`** - Skills system for D&D content:
+  - `character-management/` - Character CRUD via markdown files (uses built-in Write/Read/Edit tools)
+  - `dnd-knowledge-store/` - D&D 5e reference library (classes, spells, monsters, DM guidance)
+  - `campaign-guide/` - Campaign loading and story tracking
+  - `dnd-dm/` - DM techniques and session guidance
+- **`campaigns/`** - Campaign skeletons (Acts → Beats structure) and active instances
 
 
 
