@@ -94,10 +94,7 @@ campaigns/
     ├── characters/                    # Party characters
     │   ├── character1.md
     │   └── character2.md
-    ├── campaign_progress.md           # Tracks current Act/Beat
-    └── sessions/
-        ├── session_01.md
-        └── session_02.md
+    └── campaign_progress.md           # Tracks current Act/Beat
 ```
 
 ---
@@ -151,8 +148,6 @@ Initialize progress tracking file:
 **Instance:** [instance_name]
 **Template:** [campaign_name]
 **Created:** [date]
-**Last Session:** [date]
-**Session Count:** 0
 
 ## Current Progress
 - **Act:** 1
@@ -165,14 +160,11 @@ Initialize progress tracking file:
 ## Key Decisions
 *(Track important player choices)*
 
-## Next Session
-*(Notes for next session)*
 ```
 
 ### Step 5: Create Subdirectories
 
 - `campaigns/[name]_[instance]/characters/`
-- `campaigns/[name]_[instance]/sessions/`
 
 ---
 
@@ -222,10 +214,8 @@ When story advances (beat completed, act finished):
 2. Edit to update:
    - Current Act number
    - Current Beat number and name
-   - Session count
    - Last played date
 3. Add key decision to Key Decisions section
-4. Update Next Session notes
 
 ### Acts and Beats
 
@@ -236,47 +226,6 @@ Format: `Beat X.Y (Beat Name)`
 - Example: `Beat 1.2 (Into the Cellar)`
 - Example: `Beat 2.1 (Journey to the Tower)`
 
----
-
-## Session Management
-
-### Creating Session Logs
-
-After each game session, create a session log:
-
-```
-campaigns/[instance]/sessions/session_[number].md
-```
-
-**Session log template:**
-```markdown
-# Session [Number] - [Date]
-
-## Attendance
-- DM: [name]
-- Players: [character names]
-
-## Summary
-[Brief summary of what happened]
-
-## Key Events
-- Event 1
-- Event 2
-- Event 3
-
-## Combat Encounters
-- [If any]
-
-## Treasure/Rewards
-- [Items found, XP gained]
-
-## Story Progress
-- **Completed Beats:** Beat X.Y (name)
-- **Current Beat:** Beat X.Y (name)
-
-## Notes for Next Session
-- [Hooks, unresolved plot threads]
-```
 
 ---
 
@@ -383,7 +332,6 @@ campaigns/
 Each instance has:
 - Independent characters
 - Independent progress
-- Independent sessions
 
 ---
 

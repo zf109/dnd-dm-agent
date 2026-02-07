@@ -93,13 +93,13 @@ async def test_character_management_create_and_update_wizard():
     import shutil
     import re
 
-    # Clean up any existing test session
-    test_session_path = "game_sessions/test_session"
-    if os.path.exists(test_session_path):
-        shutil.rmtree(test_session_path)
+    # Clean up any existing test campaign instance
+    test_campaign_path = "campaigns/test_campaign"
+    if os.path.exists(test_campaign_path):
+        shutil.rmtree(test_campaign_path)
 
     # ===== PART 1: CREATE CHARACTER =====
-    result = await run("Create a test session called 'test_session', then create a level 1 human wizard named Merlin")
+    result = await run("Create a test campaign instance called 'test_campaign', then create a level 1 human wizard named Merlin")
 
     # Check that we got a response
     assert result, "Expected non-empty response from agent"
@@ -111,12 +111,12 @@ async def test_character_management_create_and_update_wizard():
     assert any(keyword in result_lower for keyword in ["created", "character", "wizard"]), \
         f"Expected character creation confirmation, got: {result}"
 
-    # Check that session was created
-    assert os.path.exists(test_session_path), f"Expected session directory at {test_session_path}"
-    assert os.path.exists(f"{test_session_path}/characters"), "Expected characters directory"
+    # Check that campaign instance was created
+    assert os.path.exists(test_campaign_path), f"Expected campaign directory at {test_campaign_path}"
+    assert os.path.exists(f"{test_campaign_path}/characters"), "Expected characters directory"
 
     # Check that character file was created
-    character_file = f"{test_session_path}/characters/merlin.md"
+    character_file = f"{test_campaign_path}/characters/merlin.md"
     assert os.path.exists(character_file), f"Expected character file at {character_file}"
 
     # Read and validate initial character file content
@@ -154,7 +154,7 @@ async def test_character_management_create_and_update_wizard():
 
     # ===== PART 2: UPDATE CHARACTER (TAKE DAMAGE) =====
     damage_amount = 3
-    update_result = await run(f"Merlin from test_session takes {damage_amount} damage in combat")
+    update_result = await run(f"Merlin from test_campaign takes {damage_amount} damage in combat")
 
     # Check update response
     assert update_result, "Expected non-empty response from update"
@@ -202,4 +202,4 @@ async def test_character_management_create_and_update_wizard():
         assert "##" in spell_content, "Expected markdown headers in character file"
 
     # Clean up
-    shutil.rmtree(test_session_path)
+    shutil.rmtree(test_campaign_path)

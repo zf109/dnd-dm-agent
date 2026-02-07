@@ -43,7 +43,6 @@ uv run ruff format .
 - **`dnd_dm_agent/claude_agent.py`** - Main agent using Claude Agent SDK with 5 custom tools
 - **`dnd_dm_agent/tools/`** - Tool implementations (used by claude_agent.py):
   - `character_tools/` - Character CRUD, validation, schema (D&D 5e character structure)
-  - `session_tools.py` - Game session management and logging
   - `utility_tools.py` - Dice rolls, game state tracking
 - **`.claude/skills/dnd-knowledge-store/`** - D&D 5e knowledge skill with markdown references
   - `knowledge/` - Classes, spells, monsters, DM guidance (moved from dnd_dm_agent/)
