@@ -6,7 +6,7 @@ This guide shows safe patterns for editing character files using the Edit tool.
 
 1. **Always Read first** - Use Read tool to get current character state
 2. **Edit specific sections** - Don't rewrite entire file, just the section that changed
-3. **Validate after editing** - Run validate_character to check for errors
+3. **Validate after editing** - Check against validation_rules.md for errors
 4. **Use exact string matching** - old_string must match exactly (including spacing/formatting)
 
 ---
@@ -17,7 +17,7 @@ This guide shows safe patterns for editing character files using the Edit tool.
 
 **Step 1: Read the character**
 ```
-Read file_path="game_sessions/session1/characters/thork.md"
+Read file_path="campaigns/a_most_potent_brew_party1/characters/thork.md"
 ```
 
 **Step 2: Identify the section to edit**

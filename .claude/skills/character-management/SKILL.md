@@ -297,9 +297,6 @@ Use for all dice rolls:
 - Saving throws
 - Hit point rolls on level up
 
-### validate_character Tool
-Use after character modifications to ensure D&D 5e compliance.
-
 ### dnd-knowledge-store Skill
 Reference for:
 - Class features by level

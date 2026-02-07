@@ -188,15 +188,3 @@ Thumbs.db
 .env.*.local
 config/secrets.json
 config/keys.json
-
-# AI/ML model files (can be large)
-*.pkl
-*.model
-*.weights
-*.h5
-
-# Game save files
-saves/
-game_states/
-session_data/
-game_sessions/
