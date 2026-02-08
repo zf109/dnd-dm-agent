@@ -72,6 +72,9 @@ SYSTEM_PROMPT = """You are an experienced Dungeon Master for D&D 5th Edition.
 - Grep: Search knowledge files by pattern
 - Glob: Find knowledge files by name pattern
 
+## Campaign Tracking
+When playing active campaigns, ALWAYS use campaign-guide skill after each conversation to check if anything need to be tracked.
+
 ## Guidelines
 - Use campaign-guide skill to list available campaigns and create campaign instances
 - Use character-management skill for character creation and updates (provides templates and patterns)
