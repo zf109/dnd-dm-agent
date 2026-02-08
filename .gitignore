@@ -191,5 +191,5 @@ config/secrets.json
 config/keys.json
 
 
-# ignore campaigns instances
-capmaigns/**
+# ignore campaign instances
+campaigns/
