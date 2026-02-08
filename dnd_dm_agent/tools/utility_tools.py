@@ -1,12 +1,8 @@
-"""Utility tools for DnD DM Agent - dice rolling, game state, and convenience functions."""
+"""Utility tools for DnD DM Agent - dice rolling and convenience functions."""
 
-import json
 import random
 import re
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, Optional, Any
-from .session_tools import SESSIONS_DIR
+from typing import Dict, Any
 
 
 
@@ -55,89 +51,5 @@ def roll_dice(notation: str) -> Dict[str, Any]:
             "total": result["total"],
             "modifier": result["modifier"],
         }
-    except Exception as e:
-        return {"status": "error", "error_message": str(e)}
-
-
-def manage_game_state(session_name: str, action: str, location: Optional[str] = None, scene: Optional[str] = None) -> Dict[str, Any]:
-    """Get or update game state information for a specific session.
-
-    Use this tool to track the current game state, update locations,
-    or modify the current scene description. Changes are automatically
-    saved to session metadata.
-
-    Args:
-        session_name: Name of the game session
-        action: Action to perform - 'get_state', 'update_location', or 'update_scene'
-        location: New location name (only for update_location action)
-        scene: New scene description (only for update_scene action)
-
-    Returns:
-        Dictionary with current game state or update confirmation
-    """
-    try:
-        session_path = SESSIONS_DIR / session_name
-        if not session_path.exists():
-            return {"status": "error", "error_message": f"Session '{session_name}' does not exist"}
-
-        metadata_path = session_path / "session_metadata.json" 
-        
-        # Load current metadata
-        with open(metadata_path, "r") as f:
-            metadata = json.load(f)
-
-        if action == "get_state":
-            return {
-                "status": "success",
-                "current_location": metadata.get("current_location", "Unknown Location"),
-                "current_scene": metadata.get("current_scene", ""),
-                "characters": metadata.get("characters", []),
-                "session_name": session_name,
-                "history": metadata.get("history", []),
-            }
-        elif action == "update_location" and location:
-            old_location = metadata.get("current_location", "Unknown Location")
-            metadata["current_location"] = location
-            metadata["last_played"] = datetime.now().isoformat()
-            
-            # Add to history
-            if "history" not in metadata:
-                metadata["history"] = []
-            
-            history_entry = {
-                "timestamp": datetime.now().isoformat(),
-                "type": "location_change",
-                "from": old_location,
-                "to": location
-            }
-            metadata["history"].append(history_entry)
-            
-            # Save metadata
-            with open(metadata_path, "w") as f:
-                json.dump(metadata, f, indent=2)
-            
-            return {"status": "success", "location": location}
-        elif action == "update_scene" and scene:
-            metadata["current_scene"] = scene
-            metadata["last_played"] = datetime.now().isoformat()
-            
-            # Add to history
-            if "history" not in metadata:
-                metadata["history"] = []
-            
-            history_entry = {
-                "timestamp": datetime.now().isoformat(),
-                "type": "scene_change",
-                "scene": scene
-            }
-            metadata["history"].append(history_entry)
-            
-            # Save metadata
-            with open(metadata_path, "w") as f:
-                json.dump(metadata, f, indent=2)
-            
-            return {"status": "success", "scene": scene}
-        else:
-            return {"status": "error", "error_message": "Invalid action or missing required parameters"}
     except Exception as e:
         return {"status": "error", "error_message": str(e)}
