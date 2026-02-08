@@ -113,6 +113,8 @@
 - 50 ft rope (from Glowkindle)
 - Additional torches (from Glowkindle)
 - **2x Potion of Healing** (2d4+2 HP each, from Glowkindle)
+- **2x Potion of Growth** (grow one size larger for 1d4 hours, advantage on STR checks/saves, +1d4 damage on STR attacks, from Main Laboratory)
+- Wizard's Journal (from Main Laboratory, contains history of the ruins)
 
 ### Status Effects
 - **Exhaustion Level 1:** Disadvantage on ability checks (from resurrection)

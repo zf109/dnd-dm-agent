@@ -11,6 +11,8 @@ from claude_agent_sdk import (
     create_sdk_mcp_server,
 )
 
+from .logging_config import logger
+
 # Project root directory (for skills and file operations)
 PROJECT_ROOT = str(Path(__file__).parent.parent.resolve())
 
@@ -26,7 +28,10 @@ from .tools.campaign_instance_tools import create_campaign_instance as _create_c
 
 @tool("roll_dice", "Roll dice using D&D notation (e.g., '1d20+5', '2d6')", {"notation": str})
 async def roll_dice(args: dict[str, Any]) -> dict[str, Any]:
-    result = _roll_dice(args["notation"])
+    notation = args["notation"]
+    logger.debug(f"Rolling dice: {notation}")
+    result = _roll_dice(notation)
+    logger.info(f"Dice roll {notation} = {result}")
     return {"content": [{"type": "text", "text": str(result)}]}
 
 
@@ -36,7 +41,14 @@ async def roll_dice(args: dict[str, Any]) -> dict[str, Any]:
     {"campaign_template": str, "instance_name": str}
 )
 async def create_campaign_instance(args: dict[str, Any]) -> dict[str, Any]:
-    result = _create_campaign_instance(args["campaign_template"], args["instance_name"])
+    campaign = args["campaign_template"]
+    instance = args["instance_name"]
+    logger.info(f"Creating campaign instance: {campaign}_{instance}")
+    result = _create_campaign_instance(campaign, instance)
+    if result.get("status") == "success":
+        logger.info(f"Campaign instance created successfully: {result.get('instance_path')}")
+    else:
+        logger.error(f"Campaign creation failed: {result.get('error_message')}")
     return {"content": [{"type": "text", "text": str(result)}]}
 
 
@@ -127,26 +139,35 @@ async def run(prompt: str) -> str:
     from claude_agent_sdk import AssistantMessage, TextBlock
     import uuid
 
+    logger.info(f"Starting agent query: {prompt[:100]}...")
     options = get_options()
     responses = []
 
     # Use async generator to work around SDK bug with MCP servers
     # See: https://github.com/anthropics/claude-agent-sdk-python/issues/266
     async def prompt_generator():
+        session_id = str(uuid.uuid4())
+        logger.debug(f"Session ID: {session_id}")
         yield {
             "type": "user",
             "message": {"role": "user", "content": prompt},
             "parent_tool_use_id": None,
-            "session_id": str(uuid.uuid4()),
+            "session_id": session_id,
         }
 
-    async for message in query(prompt=prompt_generator(), options=options):
-        if isinstance(message, AssistantMessage):
-            for block in message.content:
-                if isinstance(block, TextBlock):
-                    responses.append(block.text)
+    try:
+        async for message in query(prompt=prompt_generator(), options=options):
+            if isinstance(message, AssistantMessage):
+                for block in message.content:
+                    if isinstance(block, TextBlock):
+                        responses.append(block.text)
 
-    return "\n".join(responses)
+        logger.info("Agent query completed successfully")
+        return "\n".join(responses)
+
+    except Exception as e:
+        logger.error(f"Agent query failed: {e}", exc_info=True)
+        raise
 
 
 def main():

@@ -20,6 +20,9 @@ D&D DM Agent - An AI Dungeon Master assistant built with Claude Agent SDK. Singl
 # Run the agent (interactive mode)
 uv run python -m dnd_dm_agent.claude_agent "your prompt here"
 
+# Run with debug logging
+DND_LOG_LEVEL=DEBUG uv run python -m dnd_dm_agent.claude_agent "your prompt here"
+
 # Run tests
 uv run pytest tests/
 
@@ -44,6 +47,9 @@ uv run ruff format .
 - **`dnd_dm_agent/tools/`** - Custom tool implementations:
   - `utility_tools.py` - Dice rolls (`roll_dice`)
   - `campaign_instance_tools.py` - Campaign instance creation (`create_campaign_instance`)
+- **`dnd_dm_agent/logging_config.py`** - Native Python logging (console + file)
+  - Logs to `logs/agent.log`
+  - Control level via `DND_LOG_LEVEL` env var (DEBUG, INFO, WARNING, ERROR)
 - **`.claude/skills/`** - Skills system for D&D content:
   - `character-management/` - Character CRUD via markdown files (uses built-in Write/Read/Edit tools)
   - `dnd-knowledge-store/` - D&D 5e reference library (classes, spells, monsters, DM guidance)

@@ -58,3 +58,9 @@
 **2026-02-08** - [Discovery]: Found map sketch showing Storage Vault (north), Living Quarters (east), Hidden Study (location unknown)
 **2026-02-08** - [Knowledge]: Intact potions remain in protective case, secured specimens mentioned but not found
 **2026-02-08** - [Session]: Player saves and exits - standing in Main Laboratory, ready to collect potions or continue exploring
+**2026-02-08** - [Action]: Sapphire attempts to collect Potions of Growth (DEX check: 5, fumble!)
+**2026-02-08** - [Item]: One potion shatters on floor, two potions successfully caught and secured
+**2026-02-08** - [Inventory]: Added 2x Potion of Growth to equipment
+**2026-02-08** - [Action]: Sapphire disables the alchemical apparatus (Arcana check: 11, success!)
+**2026-02-08** - [Completion]: Apparatus safely shut down and locked - will no longer create growth potions
+**2026-02-08** - [Session]: Player saves and exits - Main Laboratory secured, apparatus disabled, ready to explore further

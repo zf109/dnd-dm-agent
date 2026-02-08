@@ -181,6 +181,7 @@ Thumbs.db
 
 # Log files
 *.log
+logs/
 
 # API keys and secrets
 .env
@@ -188,3 +189,7 @@ Thumbs.db
 .env.*.local
 config/secrets.json
 config/keys.json
+
+
+# ignore campaigns instances
+capmaigns/**
