@@ -1,6 +1,6 @@
 ---
 name: character-management
-description: Manage D&D 5e characters using markdown files. Create, read, update characters with Write/Read/Edit tools. Provides character templates, edit patterns, and validation rules. Use when players create characters, level up, take damage, or update character information.
+description: Manage D&D 5e characters using markdown files. Create, read, update characters with Write/Read/Edit tools. Provides character templates, edit patterns, and validation rules. Use when players create characters, level up, take damage, or update character information. Use whenever a character's state changes.
 allowed-tools: Read, Write, Edit
 ---
 
