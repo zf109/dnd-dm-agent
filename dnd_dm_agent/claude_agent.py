@@ -1,12 +1,17 @@
 """DnD Dungeon Master Agent using Claude Agent SDK."""
 
 import asyncio
+import sys
+import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, AsyncIterator
 
 from claude_agent_sdk import (
     query,
     ClaudeAgentOptions,
+    AssistantMessage,
+    TextBlock,
+    ToolUseBlock,
     tool,
     create_sdk_mcp_server,
 )
@@ -134,14 +139,51 @@ def get_options(permission_mode: str = "acceptEdits") -> ClaudeAgentOptions:
     )
 
 
-async def run(prompt: str) -> str:
-    """Run agent with a prompt."""
-    from claude_agent_sdk import AssistantMessage, TextBlock
-    import uuid
+def process_message(message: Any) -> str | None:
+    """
+    Process a single message and apply logging.
+    Returns text content if it's a TextBlock, None otherwise.
+    This function can be imported and used by REPL or other interfaces.
+    """
+    if isinstance(message, AssistantMessage):
+        text_content = None
+        for block in message.content:
+            if isinstance(block, TextBlock):
+                text_content = block.text
+            elif isinstance(block, ToolUseBlock):
+                # Log ALL tool uses for debugging
+                logger.debug(f"Tool invoked: {block.name} with input: {block.input}")
+
+                # Note: Skills are NOT tools - they're instruction sets loaded into context
+                # This logging is kept for backward compatibility but will likely never trigger
+                if block.name == "Skill":
+                    skill_name = block.input.get("skill", "unknown")
+                    skill_args = block.input.get("args", "")
+                    logger.info(f"Skill invoked: {skill_name}" +
+                               (f" with args: {skill_args}" if skill_args else ""))
+        return text_content
+    return None
+
+
+async def run_query(prompt: str, options: ClaudeAgentOptions | None = None) -> AsyncIterator[Any]:
+    """
+    Run agent query with logging applied to all messages.
+    This is an async generator that yields messages with logging applied.
+
+    This function can be imported and used by REPL or other interfaces to get
+    the same logging behavior as the CLI.
+
+    Usage:
+        from dnd_dm_agent.claude_agent import run_query, get_options
+
+        async for message in run_query("Your prompt", get_options()):
+            # All messages have logging applied automatically
+            print(message)
+    """
+    if options is None:
+        options = get_options()
 
     logger.info(f"Starting agent query: {prompt[:100]}...")
-    options = get_options()
-    responses = []
 
     # Use async generator to work around SDK bug with MCP servers
     # See: https://github.com/anthropics/claude-agent-sdk-python/issues/266
@@ -157,23 +199,35 @@ async def run(prompt: str) -> str:
 
     try:
         async for message in query(prompt=prompt_generator(), options=options):
-            if isinstance(message, AssistantMessage):
-                for block in message.content:
-                    if isinstance(block, TextBlock):
-                        responses.append(block.text)
+            # Apply logging to each message
+            process_message(message)
+            # Yield message for caller to use
+            yield message
 
         logger.info("Agent query completed successfully")
-        return "\n".join(responses)
 
     except Exception as e:
         logger.error(f"Agent query failed: {e}", exc_info=True)
         raise
 
 
+async def run(prompt: str) -> str:
+    """
+    Run agent with a prompt and return the text response.
+    This is the original CLI interface (backward compatible).
+    """
+    responses = []
+    async for message in run_query(prompt):
+        if isinstance(message, AssistantMessage):
+            for block in message.content:
+                if isinstance(block, TextBlock):
+                    responses.append(block.text)
+
+    return "\n".join(responses)
+
+
 def main():
     """CLI entry point."""
-    import sys
-
     if len(sys.argv) > 1:
         prompt = " ".join(sys.argv[1:])
         print(asyncio.run(run(prompt)))
