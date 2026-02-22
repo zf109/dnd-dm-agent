@@ -537,3 +537,121 @@ body {
 
 .send-btn:hover:not(:disabled) { background: var(--accent-gold); }
 .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---- Session Setup Screen ---- */
+.setup-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.setup-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 40px 48px;
+  width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+.setup-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setup-title {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  color: var(--accent-gold);
+  letter-spacing: 0.05em;
+}
+
+.setup-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.setup-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.setup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.setup-label {
+  font-family: var(--font-serif);
+  font-size: 0.7rem;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.setup-select {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  padding: 10px 12px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  text-transform: capitalize;
+}
+
+.setup-select:focus {
+  border-color: var(--accent-gold-dim);
+}
+
+.setup-select option {
+  background: var(--bg-secondary);
+}
+
+.setup-loading,
+.setup-empty {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+
+.setup-start-btn {
+  background: var(--accent-gold-dim);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  padding: 12px;
+  transition: background 0.15s;
+  margin-top: 4px;
+}
+
+.setup-start-btn:hover:not(:disabled) {
+  background: var(--accent-gold);
+}
+
+.setup-start-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

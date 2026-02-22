@@ -44,6 +44,15 @@ async def list_campaigns():
     return {"instances": sorted(instances)}
 
 
+@app.get("/api/campaigns/{campaign_instance}/characters")
+async def list_characters(campaign_instance: str):
+    chars_dir = PROJECT_ROOT / "campaigns" / campaign_instance / "characters"
+    if not chars_dir.exists():
+        return {"characters": []}
+    characters = [f.stem for f in chars_dir.glob("*.md")]
+    return {"characters": sorted(characters)}
+
+
 @app.get("/api/character/{campaign_instance}/{character_name}")
 async def get_character(campaign_instance: str, character_name: str):
     path = PROJECT_ROOT / "campaigns" / campaign_instance / "characters" / f"{character_name}.md"

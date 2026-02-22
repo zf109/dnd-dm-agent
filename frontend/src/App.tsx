@@ -1,5 +1,5 @@
 import './App.css';
-import { useReducer, useCallback, useEffect } from 'react';
+import { useReducer, useCallback, useEffect, useState } from 'react';
 import type { ChatEntry, CharacterData, ServerMessage } from './types/messages';
 import { useWebSocket } from './hooks/useWebSocket';
 import type { WSStatus } from './hooks/useWebSocket';
@@ -10,10 +10,7 @@ import { CharacterSidebar } from './components/sidebar/CharacterSidebar';
 import { ChatLog } from './components/chat/ChatLog';
 import { InputBar } from './components/input/InputBar';
 import { ResizablePanels } from './components/layout/ResizablePanels';
-
-// Hardcoded for now — could be made dynamic later
-const CAMPAIGN_INSTANCE = 'a_most_potent_brew_sapphire_adventure';
-const CHARACTER_NAME = 'sapphire_star';
+import { SessionSetup } from './components/SessionSetup';
 
 function generateId() {
   return Math.random().toString(36).slice(2, 10);
@@ -26,6 +23,11 @@ function getOrCreateSessionId(): string {
     sessionStorage.setItem('dnd-session-id', id);
   }
   return id;
+}
+
+interface SessionConfig {
+  campaign: string;
+  character: string;
 }
 
 interface AppState {
@@ -107,6 +109,16 @@ function reducer(state: AppState, action: Action): AppState {
 const SESSION_ID = getOrCreateSessionId();
 
 export default function App() {
+  const [session, setSession] = useState<SessionConfig | null>(null);
+
+  if (!session) {
+    return <SessionSetup onStart={(campaign, character) => setSession({ campaign, character })} />;
+  }
+
+  return <GameView session={session} />;
+}
+
+function GameView({ session }: { session: SessionConfig }) {
   const [state, dispatch] = useReducer(reducer, {
     chatEntries: [],
     isAgentTyping: false,
@@ -117,7 +129,7 @@ export default function App() {
 
   const fetchCharacter = useCallback(async () => {
     try {
-      const res = await fetch(`/api/character/${CAMPAIGN_INSTANCE}/${CHARACTER_NAME}`);
+      const res = await fetch(`/api/character/${session.campaign}/${session.character}`);
       if (!res.ok) return;
       const data = await res.json();
       const parsed = parseCharacterMarkdown(data.markdown);
@@ -125,7 +137,7 @@ export default function App() {
     } catch {
       /* silently ignore */
     }
-  }, []);
+  }, [session.campaign, session.character]);
 
   const handleMessage = useCallback((msg: ServerMessage) => {
     switch (msg.type) {
@@ -179,7 +191,7 @@ export default function App() {
 
   return (
     <div className="app-root">
-      <AppHeader campaign={CAMPAIGN_INSTANCE.replace(/_/g, ' ')} wsStatus={wsStatus} />
+      <AppHeader campaign={session.campaign.replace(/_/g, ' ')} wsStatus={wsStatus} />
       <div className="app-body">
         <CharacterSidebar character={state.character} />
         <div className="main-area">
