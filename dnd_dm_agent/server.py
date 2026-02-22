@@ -129,6 +129,11 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                                 "tool_input": block.input,
                                 "display_name": _make_tool_display_name(block.name),
                             })
+                            # If agent is reading a character file, open the sheet in the UI
+                            if block.name == "Read":
+                                file_path = block.input.get("file_path", "")
+                                if "/characters/" in str(file_path) and str(file_path).endswith(".md"):
+                                    await websocket.send_json({"type": "open_character_sheet"})
 
                         elif isinstance(block, ToolResultBlock):
                             # Parse dice roll results for special display

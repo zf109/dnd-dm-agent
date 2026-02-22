@@ -6,11 +6,12 @@ import type { WSStatus } from './hooks/useWebSocket';
 import { parseCharacterMarkdown } from './services/characterParser';
 import { AppHeader } from './components/layout/AppHeader';
 import { MapPlaceholder } from './components/map/MapPlaceholder';
-import { CharacterSidebar } from './components/sidebar/CharacterSidebar';
 import { ChatLog } from './components/chat/ChatLog';
 import { InputBar } from './components/input/InputBar';
 import { ResizablePanels } from './components/layout/ResizablePanels';
 import { SessionSetup } from './components/SessionSetup';
+import { SidebarPanel } from './components/sidebar/SidebarPanel';
+import { CharacterSheetModal } from './components/character/CharacterSheetModal';
 
 function generateId() {
   return Math.random().toString(36).slice(2, 10);
@@ -35,6 +36,7 @@ interface AppState {
   isAgentTyping: boolean;
   currentDMEntryId: string | null;
   character: CharacterData | null;
+  characterMarkdown: string | null;
   wsStatus: WSStatus;
 }
 
@@ -44,7 +46,7 @@ type Action =
   | { type: 'ADD_TOOL_INDICATOR'; display_name: string }
   | { type: 'ADD_DICE_RESULT'; notation: string; rolls: number[]; total: number; modifier: number }
   | { type: 'TURN_COMPLETE' }
-  | { type: 'SET_CHARACTER'; data: CharacterData }
+  | { type: 'SET_CHARACTER'; data: CharacterData; markdown: string }
   | { type: 'SET_WS_STATUS'; status: WSStatus };
 
 function reducer(state: AppState, action: Action): AppState {
@@ -59,7 +61,6 @@ function reducer(state: AppState, action: Action): AppState {
     }
     case 'APPEND_TEXT_CHUNK': {
       if (state.currentDMEntryId) {
-        // Append to existing DM message
         return {
           ...state,
           chatEntries: state.chatEntries.map((e) =>
@@ -69,7 +70,6 @@ function reducer(state: AppState, action: Action): AppState {
           ),
         };
       } else {
-        // Remove tool indicators, start new DM message
         const newId = generateId();
         const filtered = state.chatEntries.filter((e) => e.kind !== 'tool_indicator');
         const entry: ChatEntry = { id: newId, kind: 'dm', content: action.content, isComplete: false };
@@ -98,7 +98,7 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
     case 'SET_CHARACTER':
-      return { ...state, character: action.data };
+      return { ...state, character: action.data, characterMarkdown: action.markdown };
     case 'SET_WS_STATUS':
       return { ...state, wsStatus: action.status };
     default:
@@ -124,20 +124,22 @@ function GameView({ session }: { session: SessionConfig }) {
     isAgentTyping: false,
     currentDMEntryId: null,
     character: null,
+    characterMarkdown: null,
     wsStatus: 'disconnected',
   });
 
-  const fetchCharacter = useCallback(async () => {
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [activeCharacter, setActiveCharacter] = useState(session.character);
+
+  const fetchCharacter = useCallback(async (characterName: string) => {
     try {
-      const res = await fetch(`/api/character/${session.campaign}/${session.character}`);
+      const res = await fetch(`/api/character/${session.campaign}/${characterName}`);
       if (!res.ok) return;
       const data = await res.json();
       const parsed = parseCharacterMarkdown(data.markdown);
-      if (parsed) dispatch({ type: 'SET_CHARACTER', data: parsed });
-    } catch {
-      /* silently ignore */
-    }
-  }, [session.campaign, session.character]);
+      if (parsed) dispatch({ type: 'SET_CHARACTER', data: parsed, markdown: data.markdown });
+    } catch { /* silently ignore */ }
+  }, [session.campaign]);
 
   const handleMessage = useCallback((msg: ServerMessage) => {
     switch (msg.type) {
@@ -162,15 +164,17 @@ function GameView({ session }: { session: SessionConfig }) {
       }
       case 'turn_complete':
         dispatch({ type: 'TURN_COMPLETE' });
-        // Refresh character after each turn
-        fetchCharacter();
+        fetchCharacter(activeCharacter);
+        break;
+      case 'open_character_sheet':
+        setSheetOpen(true);
         break;
       case 'error':
         console.error('Agent error:', msg.error);
         dispatch({ type: 'TURN_COMPLETE' });
         break;
     }
-  }, [fetchCharacter]);
+  }, [fetchCharacter, activeCharacter]);
 
   const { status: wsStatus, sendMessage } = useWebSocket(SESSION_ID, handleMessage);
 
@@ -178,8 +182,11 @@ function GameView({ session }: { session: SessionConfig }) {
     dispatch({ type: 'SET_WS_STATUS', status: wsStatus });
   }, [wsStatus]);
 
-  // Load character on mount
-  useEffect(() => { fetchCharacter(); }, [fetchCharacter]);
+  useEffect(() => { fetchCharacter(activeCharacter); }, [fetchCharacter, activeCharacter]);
+
+  const handleSelectCharacter = useCallback((name: string) => {
+    setActiveCharacter(name);
+  }, []);
 
   const handleSend = useCallback((text: string) => {
     if (wsStatus !== 'connected' || state.isAgentTyping) return;
@@ -192,8 +199,16 @@ function GameView({ session }: { session: SessionConfig }) {
   return (
     <div className="app-root">
       <AppHeader campaign={session.campaign.replace(/_/g, ' ')} wsStatus={wsStatus} />
+
       <div className="app-body">
-        <CharacterSidebar character={state.character} />
+        <SidebarPanel
+          character={state.character}
+          campaign={session.campaign}
+          activeCharacter={activeCharacter}
+          onOpenSheet={() => setSheetOpen(true)}
+          onSelectCharacter={handleSelectCharacter}
+        />
+
         <div className="main-area">
           <ResizablePanels
             top={<MapPlaceholder />}
@@ -201,7 +216,16 @@ function GameView({ session }: { session: SessionConfig }) {
           />
         </div>
       </div>
+
       <InputBar onSend={handleSend} disabled={isDisabled} />
+
+      {sheetOpen && state.characterMarkdown && (
+        <CharacterSheetModal
+          markdown={state.characterMarkdown}
+          characterName={activeCharacter}
+          onClose={() => setSheetOpen(false)}
+        />
+      )}
     </div>
   );
 }
