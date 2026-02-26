@@ -30,6 +30,8 @@ export function ChatLog({ entries, isTyping }: Props) {
             return <DiceRollEvent key={entry.id} notation={entry.notation} rolls={entry.rolls} total={entry.total} modifier={entry.modifier} />;
           case 'tool_indicator':
             return <ToolUseEvent key={entry.id} display_name={entry.display_name} />;
+          case 'system':
+            return <div key={entry.id} className="system-message">{entry.content}</div>;
         }
       })}
       {isTyping && entries.every(e => e.kind !== 'dm' || ('isComplete' in e && e.isComplete)) && (

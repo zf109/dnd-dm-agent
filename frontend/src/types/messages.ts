@@ -12,7 +12,8 @@ export type ChatEntry =
   | { id: string; kind: 'player'; content: string }
   | { id: string; kind: 'dm'; content: string; isComplete: boolean }
   | { id: string; kind: 'dice'; notation: string; rolls: number[]; total: number; modifier: number }
-  | { id: string; kind: 'tool_indicator'; display_name: string };
+  | { id: string; kind: 'tool_indicator'; display_name: string }
+  | { id: string; kind: 'system'; content: string };
 
 export interface CharacterData {
   name: string;

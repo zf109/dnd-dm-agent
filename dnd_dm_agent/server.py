@@ -4,12 +4,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from claude_agent_sdk import ClaudeSDKClient, AssistantMessage, TextBlock, ToolUseBlock, ToolResultBlock
 
-from .claude_agent import get_options, process_message
+from .claude_agent import get_options, process_message, post_turn_bookkeeping
 from .logging_config import logger
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -82,11 +82,20 @@ def _make_tool_display_name(tool_name: str) -> str:
 
 
 @app.websocket("/ws/{session_id}")
-async def websocket_endpoint(websocket: WebSocket, session_id: str):
+async def websocket_endpoint(
+    websocket: WebSocket,
+    session_id: str,
+    campaign: str = Query(""),
+    character: str = Query(""),
+):
     await websocket.accept()
-    logger.info(f"WebSocket connected: session={session_id}")
+    logger.info(f"WebSocket connected: session={session_id} campaign={campaign!r} character={character!r}")
 
-    async with ClaudeSDKClient(options=get_options(permission_mode="bypassPermissions")) as client:
+    async with ClaudeSDKClient(options=get_options(
+        permission_mode="bypassPermissions",
+        campaign=campaign,
+        character=character,
+    )) as client:
         try:
             async for raw in websocket.iter_text():
                 try:
@@ -152,6 +161,21 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                                     "type": "tool_result",
                                     "result": result_data,
                                 })
+
+                # Post-turn bookkeeping: update character sheet / campaign state silently.
+                # Tool indicators are forwarded so the UI shows brief "updating files..." feedback.
+                # Text output from the agent is suppressed (bookkeeping should not narrate).
+                async for message in post_turn_bookkeeping(client):
+                    if not isinstance(message, AssistantMessage):
+                        continue
+                    for block in message.content:
+                        if isinstance(block, ToolUseBlock):
+                            await websocket.send_json({
+                                "type": "tool_use",
+                                "tool_name": block.name,
+                                "tool_input": block.input,
+                                "display_name": _make_tool_display_name(block.name),
+                            })
 
                 await websocket.send_json({"type": "turn_complete"})
                 logger.info(f"[{session_id}] Turn complete")

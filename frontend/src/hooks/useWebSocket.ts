@@ -3,7 +3,11 @@ import type { ServerMessage } from '../types/messages';
 
 export type WSStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
-export function useWebSocket(sessionId: string, onMessage: (msg: ServerMessage) => void) {
+export function useWebSocket(
+  sessionId: string,
+  onMessage: (msg: ServerMessage) => void,
+  queryString: string = '',
+) {
   const ws = useRef<WebSocket | null>(null);
   const [status, setStatus] = useState<WSStatus>('disconnected');
   const reconnectRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -12,7 +16,7 @@ export function useWebSocket(sessionId: string, onMessage: (msg: ServerMessage) 
 
   const connect = useCallback(() => {
     setStatus('connecting');
-    const socket = new WebSocket(`ws://localhost:8000/ws/${sessionId}`);
+    const socket = new WebSocket(`ws://localhost:8000/ws/${sessionId}${queryString ? `?${queryString}` : ''}`);
     ws.current = socket;
 
     socket.onopen = () => setStatus('connected');
@@ -27,7 +31,7 @@ export function useWebSocket(sessionId: string, onMessage: (msg: ServerMessage) 
       reconnectRef.current = setTimeout(connect, 3000);
     };
     socket.onerror = () => setStatus('error');
-  }, [sessionId]);
+  }, [sessionId, queryString]);
 
   useEffect(() => {
     connect();

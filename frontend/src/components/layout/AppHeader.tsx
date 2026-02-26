@@ -3,9 +3,10 @@ import type { WSStatus } from '../../hooks/useWebSocket';
 interface Props {
   campaign: string;
   wsStatus: WSStatus;
+  onLeave: () => void;
 }
 
-export function AppHeader({ campaign, wsStatus }: Props) {
+export function AppHeader({ campaign, wsStatus, onLeave }: Props) {
   return (
     <header className="app-header">
       <h1>⚔ D&D DM Agent</h1>
@@ -15,6 +16,7 @@ export function AppHeader({ campaign, wsStatus }: Props) {
           <div className={`ws-dot ${wsStatus}`} />
           <span>{wsStatus}</span>
         </div>
+        <button className="leave-btn" onClick={onLeave} title="Return to campaign selection">Leave</button>
       </div>
     </header>
   );

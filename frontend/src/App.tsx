@@ -1,5 +1,5 @@
 import './App.css';
-import { useReducer, useCallback, useEffect, useState } from 'react';
+import { useReducer, useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import type { ChatEntry, CharacterData, ServerMessage } from './types/messages';
 import { useWebSocket } from './hooks/useWebSocket';
 import type { WSStatus } from './hooks/useWebSocket';
@@ -26,6 +26,38 @@ function getOrCreateSessionId(): string {
   return id;
 }
 
+const SESSION_ID = getOrCreateSessionId();
+
+function loadSavedSession(): SessionConfig | null {
+  try {
+    const raw = sessionStorage.getItem('dnd-session-config');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveSession(config: SessionConfig) {
+  sessionStorage.setItem('dnd-session-config', JSON.stringify(config));
+}
+
+const CHAT_KEY = `dnd-chat-${SESSION_ID}`;
+
+function loadChatEntries(): ChatEntry[] {
+  try {
+    const raw = sessionStorage.getItem(CHAT_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveChatEntries(entries: ChatEntry[]) {
+  try {
+    sessionStorage.setItem(CHAT_KEY, JSON.stringify(entries));
+  } catch { /* quota exceeded — ignore */ }
+}
+
 interface SessionConfig {
   campaign: string;
   character: string;
@@ -42,6 +74,7 @@ interface AppState {
 
 type Action =
   | { type: 'ADD_PLAYER_MESSAGE'; content: string }
+  | { type: 'ADD_SYSTEM_MESSAGE'; content: string; hidden?: boolean }
   | { type: 'APPEND_TEXT_CHUNK'; content: string }
   | { type: 'ADD_TOOL_INDICATOR'; display_name: string }
   | { type: 'ADD_DICE_RESULT'; notation: string; rolls: number[]; total: number; modifier: number }
@@ -54,6 +87,10 @@ function reducer(state: AppState, action: Action): AppState {
     case 'ADD_PLAYER_MESSAGE': {
       const entry: ChatEntry = { id: generateId(), kind: 'player', content: action.content };
       return { ...state, chatEntries: [...state.chatEntries, entry], isAgentTyping: true };
+    }
+    case 'ADD_SYSTEM_MESSAGE': {
+      const entry: ChatEntry = { id: generateId(), kind: 'system', content: action.content };
+      return { ...state, chatEntries: [...state.chatEntries, entry] };
     }
     case 'ADD_TOOL_INDICATOR': {
       const entry: ChatEntry = { id: generateId(), kind: 'tool_indicator', display_name: action.display_name };
@@ -106,30 +143,41 @@ function reducer(state: AppState, action: Action): AppState {
   }
 }
 
-const SESSION_ID = getOrCreateSessionId();
-
 export default function App() {
-  const [session, setSession] = useState<SessionConfig | null>(null);
+  const [session, setSession] = useState<SessionConfig | null>(loadSavedSession);
+
+  const handleStart = useCallback((campaign: string, character: string) => {
+    const config = { campaign, character };
+    saveSession(config);
+    setSession(config);
+  }, []);
 
   if (!session) {
-    return <SessionSetup onStart={(campaign, character) => setSession({ campaign, character })} />;
+    return <SessionSetup onStart={handleStart} />;
   }
 
-  return <GameView session={session} />;
+  return <GameView session={session} onLeave={() => {
+    sessionStorage.removeItem('dnd-session-config');
+    sessionStorage.removeItem(CHAT_KEY);
+    setSession(null);
+  }} />;
 }
 
-function GameView({ session }: { session: SessionConfig }) {
-  const [state, dispatch] = useReducer(reducer, {
-    chatEntries: [],
+function GameView({ session, onLeave }: { session: SessionConfig; onLeave: () => void }) {
+  const [state, dispatch] = useReducer(reducer, null, () => ({
+    chatEntries: loadChatEntries(),
     isAgentTyping: false,
     currentDMEntryId: null,
     character: null,
     characterMarkdown: null,
     wsStatus: 'disconnected',
-  });
+  }));
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [activeCharacter, setActiveCharacter] = useState(session.character);
+  const hasInitialized = useRef(false);
+  // True if we're resuming a previous session (chat history was restored from storage)
+  const isRestoredSession = useRef(state.chatEntries.length > 0);
 
   const fetchCharacter = useCallback(async (characterName: string) => {
     try {
@@ -176,13 +224,35 @@ function GameView({ session }: { session: SessionConfig }) {
     }
   }, [fetchCharacter, activeCharacter]);
 
-  const { status: wsStatus, sendMessage } = useWebSocket(SESSION_ID, handleMessage);
+  const wsQueryString = useMemo(
+    () => new URLSearchParams({ campaign: session.campaign, character: activeCharacter }).toString(),
+    [session.campaign, activeCharacter],
+  );
+  const { status: wsStatus, sendMessage } = useWebSocket(SESSION_ID, handleMessage, wsQueryString);
 
   useEffect(() => {
     dispatch({ type: 'SET_WS_STATUS', status: wsStatus });
   }, [wsStatus]);
 
   useEffect(() => { fetchCharacter(activeCharacter); }, [fetchCharacter, activeCharacter]);
+
+  // Persist chat entries to sessionStorage on every change
+  useEffect(() => { saveChatEntries(state.chatEntries); }, [state.chatEntries]);
+
+  useEffect(() => {
+    if (wsStatus !== 'connected' || hasInitialized.current) return;
+    hasInitialized.current = true;
+    // On a restored session, skip the init message — the agent has campaign context
+    // in its system prompt and the user can simply continue the conversation.
+    if (isRestoredSession.current) return;
+    const campaignLabel = session.campaign.replace(/_/g, ' ');
+    const characterLabel = activeCharacter.replace(/_/g, ' ');
+    dispatch({ type: 'ADD_SYSTEM_MESSAGE', content: `Campaign: ${campaignLabel}  ·  Character: ${characterLabel}` });
+    sendMessage({
+      type: 'user_input',
+      content: `Session started. Campaign: "${campaignLabel}". Active character: "${characterLabel}". Please load the campaign using the campaign-guide skill and greet the player in character as the DM.`,
+    });
+  }, [wsStatus, session.campaign, activeCharacter, sendMessage]);
 
   const handleSelectCharacter = useCallback((name: string) => {
     setActiveCharacter(name);
@@ -198,7 +268,7 @@ function GameView({ session }: { session: SessionConfig }) {
 
   return (
     <div className="app-root">
-      <AppHeader campaign={session.campaign.replace(/_/g, ' ')} wsStatus={wsStatus} />
+      <AppHeader campaign={session.campaign.replace(/_/g, ' ')} wsStatus={wsStatus} onLeave={onLeave} />
 
       <div className="app-body">
         <SidebarPanel
