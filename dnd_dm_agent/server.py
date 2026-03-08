@@ -166,10 +166,6 @@ async def websocket_endpoint(
                                 "tool_input": block.input,
                                 "display_name": _make_tool_display_name(block.name),
                             })
-                            if block.name == "Read":
-                                file_path = block.input.get("file_path", "")
-                                if "/characters/" in str(file_path) and str(file_path).endswith(".md"):
-                                    await websocket.send_json({"type": "open_character_sheet"})
 
                         elif isinstance(block, ToolResultBlock):
                             if hasattr(block, "content") and block.content:

@@ -214,9 +214,6 @@ function GameView({ session, onLeave }: { session: SessionConfig; onLeave: () =>
         dispatch({ type: 'TURN_COMPLETE' });
         fetchCharacter(activeCharacter);
         break;
-      case 'open_character_sheet':
-        setSheetOpen(true);
-        break;
       case 'error':
         console.error('Agent error:', msg.error);
         dispatch({ type: 'TURN_COMPLETE' });
