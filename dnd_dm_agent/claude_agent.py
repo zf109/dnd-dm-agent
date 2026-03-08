@@ -9,6 +9,7 @@ from typing import Any, AsyncIterator
 from claude_agent_sdk import (
     query,
     ClaudeAgentOptions,
+    ClaudeSDKClient,
     AssistantMessage,
     TextBlock,
     ToolUseBlock,
@@ -101,7 +102,17 @@ When playing active campaigns, ALWAYS use campaign-guide skill after each conver
 """
 
 
-def get_options(permission_mode: str = "acceptEdits") -> ClaudeAgentOptions:
+def get_options(permission_mode: str = "acceptEdits", campaign: str = "", character: str = "") -> ClaudeAgentOptions:
+    system_prompt = SYSTEM_PROMPT
+    if campaign and character:
+        system_prompt += (
+            f"\n\n## Current Session\n"
+            f"Campaign: {campaign}\n"
+            f"Active character: {character}\n"
+            f"Always maintain awareness of this campaign and character throughout the session. "
+            f"Load the campaign via the campaign-guide skill at the start of the session."
+        )
+
     return ClaudeAgentOptions(
         # ============================================
         # REQUIRED FOR SKILLS
@@ -134,7 +145,7 @@ def get_options(permission_mode: str = "acceptEdits") -> ClaudeAgentOptions:
         # ============================================
         # OTHER SETTINGS
         # ============================================
-        system_prompt=SYSTEM_PROMPT,
+        system_prompt=system_prompt,
         permission_mode=permission_mode,
     )
 
@@ -163,6 +174,27 @@ def process_message(message: Any) -> str | None:
                                (f" with args: {skill_args}" if skill_args else ""))
         return text_content
     return None
+
+
+BOOKKEEPING_PROMPT = """Silently review the last exchange and perform any needed record-keeping.
+Do not narrate or explain — only use tools if updates are actually needed:
+- If the character's HP, conditions, spell slots, or equipment changed, update their character sheet
+- If a story beat or objective was completed, mark it in the campaign guide
+- If notable NPCs were encountered or locations visited for the first time, record them"""
+
+
+async def post_turn_bookkeeping(client: ClaudeSDKClient):
+    """
+    Run a silent post-turn bookkeeping pass after each player turn.
+    Yields agent messages so callers can optionally react to tool-use events.
+    Any text the agent produces is intentionally ignored.
+    """
+    logger.debug("Starting post-turn bookkeeping")
+    await client.query(BOOKKEEPING_PROMPT)
+    async for message in client.receive_response():
+        process_message(message)
+        yield message
+    logger.debug("Post-turn bookkeeping complete")
 
 
 async def run_query(prompt: str, options: ClaudeAgentOptions | None = None) -> AsyncIterator[Any]:

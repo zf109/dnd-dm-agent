@@ -30,6 +30,13 @@ See: **[starting_campaigns.md](starting_campaigns.md)**
 - Full workflow example
 
 ### Campaign Tracking (Loading & Playing)
+Copy thethe following TODO checklist into your memeory at the start of each session, ALWAYS check against them for each user interaction before you get back to the user:
+```each turn
+[ ] Understand user's requirement.
+[ ] Take action and run the campaign.
+[ ] Track progress (same as when you hear user say save)
+```
+
 See: **[campaign_tracking.md](campaign_tracking.md)**
 
 - Load campaigns (find, read state, summarize)

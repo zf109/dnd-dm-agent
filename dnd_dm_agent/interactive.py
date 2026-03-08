@@ -2,7 +2,7 @@
 
 import asyncio
 from claude_agent_sdk import ClaudeSDKClient, AssistantMessage, TextBlock
-from .claude_agent import get_options, process_message
+from .claude_agent import get_options, process_message, post_turn_bookkeeping
 from .logging_config import logger
 
 
@@ -40,6 +40,10 @@ async def repl():
                 response = "\n".join(response_parts)
                 print(f"\nDM: {response}\n")
                 logger.info(f"[Turn {turn_count}] Response completed")
+
+                # Silent post-turn bookkeeping (tool calls logged at DEBUG level)
+                async for _ in post_turn_bookkeeping(client):
+                    pass
 
             except (EOFError, KeyboardInterrupt):
                 logger.info("REPL interrupted by user")
