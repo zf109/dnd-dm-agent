@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from claude_agent_sdk import ClaudeSDKClient, AssistantMessage, TextBlock, ToolUseBlock, ToolResultBlock
 
 from .claude_agent import get_options, process_message, run_bookkeeping_subagent
-from .logging_config import logger, bookkeeping_logger
+from .logging_config import logger, dm_logger, bookkeeping_logger
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -146,7 +146,7 @@ async def websocket_endpoint(
                 await client.query(content)
 
                 async for message in client.receive_response():
-                    process_message(message)
+                    process_message(message, dm_logger)
 
                     if not isinstance(message, AssistantMessage):
                         continue

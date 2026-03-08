@@ -1,6 +1,7 @@
 """DnD Dungeon Master Agent using Claude Agent SDK."""
 
 import asyncio
+import logging
 import sys
 import uuid
 from pathlib import Path
@@ -147,11 +148,11 @@ def get_options(permission_mode: str = "acceptEdits", campaign: str = "", charac
     )
 
 
-def process_message(message: Any) -> str | None:
+def process_message(message: Any, log: logging.Logger = logger) -> str | None:
     """
     Process a single message and apply logging.
     Returns text content if it's a TextBlock, None otherwise.
-    This function can be imported and used by REPL or other interfaces.
+    Pass a named logger (e.g. dm_logger, bookkeeping_logger) to attribute logs to the correct agent.
     """
     if isinstance(message, AssistantMessage):
         text_content = None
@@ -159,15 +160,7 @@ def process_message(message: Any) -> str | None:
             if isinstance(block, TextBlock):
                 text_content = block.text
             elif isinstance(block, ToolUseBlock):
-                logger.info(f"Tool invoked: {block.name} with input: {block.input}")
-
-                # Note: Skills are NOT tools - they're instruction sets loaded into context
-                # This logging is kept for backward compatibility but will likely never trigger
-                if block.name == "Skill":
-                    skill_name = block.input.get("skill", "unknown")
-                    skill_args = block.input.get("args", "")
-                    logger.info(f"Skill invoked: {skill_name}" +
-                               (f" with args: {skill_args}" if skill_args else ""))
+                log.info(f"Tool invoked: {block.name} with input: {block.input}")
         return text_content
     return None
 
@@ -215,7 +208,7 @@ async def run_bookkeeping_subagent(
     async with ClaudeSDKClient(options=get_bookkeeping_options(campaign, character)) as bk:
         await bk.query(handoff)
         async for message in bk.receive_response():
-            process_message(message)
+            process_message(message, bookkeeping_logger)
             yield message
     bookkeeping_logger.info("Bookkeeping subagent complete")
 
@@ -254,7 +247,7 @@ async def run_query(prompt: str, options: ClaudeAgentOptions | None = None) -> A
 
     try:
         async for message in query(prompt=prompt_generator(), options=options):
-            process_message(message)
+            process_message(message, dm_logger)
             yield message
 
         dm_logger.info("Agent query completed successfully")

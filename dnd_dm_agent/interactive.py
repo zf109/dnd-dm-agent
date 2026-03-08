@@ -3,6 +3,7 @@
 import asyncio
 from claude_agent_sdk import ClaudeSDKClient, AssistantMessage, TextBlock
 from .claude_agent import get_options, process_message, run_bookkeeping_subagent
+from .logging_config import dm_logger
 from .logging_config import logger
 
 
@@ -30,7 +31,7 @@ async def repl():
                 response_parts = []
                 async for message in client.receive_response():
                     # Apply logging to each message (same as CLI)
-                    process_message(message)
+                    process_message(message, dm_logger)
 
                     if isinstance(message, AssistantMessage):
                         for block in message.content:
