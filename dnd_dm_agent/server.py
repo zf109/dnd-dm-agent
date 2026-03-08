@@ -1,5 +1,6 @@
 """FastAPI WebSocket server exposing the D&D DM Agent."""
 
+import asyncio
 import json
 from pathlib import Path
 from typing import Any
@@ -9,8 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from claude_agent_sdk import ClaudeSDKClient, AssistantMessage, TextBlock, ToolUseBlock, ToolResultBlock
 
-from .claude_agent import get_options, process_message, post_turn_bookkeeping
-from .logging_config import logger
+from .claude_agent import get_options, process_message, run_bookkeeping_subagent
+from .logging_config import logger, bookkeeping_logger
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -81,6 +82,33 @@ def _make_tool_display_name(tool_name: str) -> str:
     return names.get(tool_name, tool_name.lower().replace("_", " "))
 
 
+async def _forward_bookkeeping_to_ws(
+    websocket: WebSocket,
+    user_msg: str,
+    dm_response: str,
+    campaign: str,
+    character: str,
+) -> None:
+    """Forward bookkeeping subagent tool-use events to the WebSocket."""
+    try:
+        async for message in run_bookkeeping_subagent(user_msg, dm_response, campaign, character):
+            if not isinstance(message, AssistantMessage):
+                continue
+            for block in message.content:
+                if isinstance(block, ToolUseBlock):
+                    try:
+                        await websocket.send_json({
+                            "type": "tool_use",
+                            "tool_name": block.name,
+                            "tool_input": block.input,
+                            "display_name": _make_tool_display_name(block.name),
+                        })
+                    except Exception:
+                        pass  # WebSocket may have closed
+    except Exception as e:
+        bookkeeping_logger.error(f"Bookkeeping subagent failed: {e}", exc_info=True)
+
+
 @app.websocket("/ws/{session_id}")
 async def websocket_endpoint(
     websocket: WebSocket,
@@ -113,11 +141,11 @@ async def websocket_endpoint(
 
                 logger.info(f"[{session_id}] User input: {content[:100]}")
 
-                # Stream agent response
+                # Stream main DM response, collecting text for bookkeeping handoff
+                dm_response_parts: list[str] = []
                 await client.query(content)
 
                 async for message in client.receive_response():
-                    # Apply standard logging
                     process_message(message)
 
                     if not isinstance(message, AssistantMessage):
@@ -125,27 +153,25 @@ async def websocket_endpoint(
 
                     for block in message.content:
                         if isinstance(block, TextBlock) and block.text:
+                            dm_response_parts.append(block.text)
                             await websocket.send_json({
                                 "type": "text_chunk",
                                 "content": block.text,
                             })
 
                         elif isinstance(block, ToolUseBlock):
-                            # Emit tool_use event for UI indicator
                             await websocket.send_json({
                                 "type": "tool_use",
                                 "tool_name": block.name,
                                 "tool_input": block.input,
                                 "display_name": _make_tool_display_name(block.name),
                             })
-                            # If agent is reading a character file, open the sheet in the UI
                             if block.name == "Read":
                                 file_path = block.input.get("file_path", "")
                                 if "/characters/" in str(file_path) and str(file_path).endswith(".md"):
                                     await websocket.send_json({"type": "open_character_sheet"})
 
                         elif isinstance(block, ToolResultBlock):
-                            # Parse dice roll results for special display
                             if hasattr(block, "content") and block.content:
                                 result_text = (
                                     block.content[0].text
@@ -156,29 +182,23 @@ async def websocket_endpoint(
                                     result_data = json.loads(result_text.replace("'", '"'))
                                 except (json.JSONDecodeError, AttributeError):
                                     result_data = {"raw": result_text}
-
                                 await websocket.send_json({
                                     "type": "tool_result",
                                     "result": result_data,
                                 })
 
-                # Post-turn bookkeeping: update character sheet / campaign state silently.
-                # Tool indicators are forwarded so the UI shows brief "updating files..." feedback.
-                # Text output from the agent is suppressed (bookkeeping should not narrate).
-                async for message in post_turn_bookkeeping(client):
-                    if not isinstance(message, AssistantMessage):
-                        continue
-                    for block in message.content:
-                        if isinstance(block, ToolUseBlock):
-                            await websocket.send_json({
-                                "type": "tool_use",
-                                "tool_name": block.name,
-                                "tool_input": block.input,
-                                "display_name": _make_tool_display_name(block.name),
-                            })
-
+                # Unblock the user immediately — bookkeeping runs in background
                 await websocket.send_json({"type": "turn_complete"})
                 logger.info(f"[{session_id}] Turn complete")
+
+                # Bookkeeping subagent: isolated context, delegates to skills
+                asyncio.create_task(_forward_bookkeeping_to_ws(
+                    websocket=websocket,
+                    user_msg=content,
+                    dm_response="\n".join(dm_response_parts),
+                    campaign=campaign,
+                    character=character,
+                ))
 
         except WebSocketDisconnect:
             logger.info(f"WebSocket disconnected: session={session_id}")
