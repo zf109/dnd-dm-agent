@@ -71,6 +71,27 @@ Key decisions are documented in `docs/adr/`. Read these before changing core pat
 - [ADR-005](docs/adr/005-dm-first-async-bookkeeping.md) — DM responds first; bookkeeping runs async after
 - [ADR-006](docs/adr/006-isolated-bookkeeping-subagent.md) — Bookkeeping is an isolated subagent with fresh context and `bypassPermissions`
 
+### Agent Harness (`docs/adr/agent-harness/`)
+
+Decisions about the harness layer that validates and guards the D&D agent's runtime behaviour:
+
+- [ADR-007](docs/adr/agent-harness/007-character-data-integrity-validator.md) — Rejected: bounds-check validator not worth the complexity; scenario evals cover the real failure mode
+- [ADR-008](docs/adr/agent-harness/008-bookkeeping-scenario-eval-suite.md) — Fixture-based integration tests assert correct post-turn state from `run_bookkeeping_subagent` directly
+- [ADR-009](docs/adr/agent-harness/009-bookkeeping-silence-check.md) — Rejected: post-hoc text-length check adds noise without action; evals cover the real failure mode
+- [ADR-010](docs/adr/agent-harness/010-eval-regression-gate.md) — Eval suite must pass before merging changes to `campaign-guide` skill or bookkeeping pipeline; enforced via ADR compliance reviewer hook
+
+## Eval Regression Gate
+
+**Before merging changes to either of these, run the bookkeeping eval suite and ensure all 4 pass:**
+- `.claude/skills/campaign-guide/` (any file)
+- `run_bookkeeping_subagent` or `get_bookkeeping_options` in `dnd_dm_agent/claude_agent.py`
+
+```bash
+uv run pytest tests/integration/test_bookkeeping_evals.py -v
+```
+
+See [ADR-010](docs/adr/agent-harness/010-eval-regression-gate.md) for rationale.
+
 ## Code Style
 
 - Python 3.13
