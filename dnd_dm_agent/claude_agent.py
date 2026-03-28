@@ -8,25 +8,24 @@ from pathlib import Path
 from typing import Any, AsyncIterator
 
 from claude_agent_sdk import (
-    query,
+    AssistantMessage,
     ClaudeAgentOptions,
     ClaudeSDKClient,
-    AssistantMessage,
     TextBlock,
     ToolUseBlock,
-    tool,
     create_sdk_mcp_server,
+    query,
+    tool,
 )
 
-from .logging_config import logger, dm_logger, bookkeeping_logger
+from .logging_config import bookkeeping_logger, dm_logger, logger
 
 # Project root directory (for skills and file operations)
 PROJECT_ROOT = str(Path(__file__).parent.parent.resolve())
 
 # Import domain logic from existing tools
-from .tools.utility_tools import roll_dice as _roll_dice
 from .tools.campaign_instance_tools import create_campaign_instance as _create_campaign_instance
-
+from .tools.utility_tools import roll_dice as _roll_dice
 
 # =============================================================================
 # Custom Tools

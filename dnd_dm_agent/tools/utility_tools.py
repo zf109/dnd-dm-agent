@@ -2,8 +2,7 @@
 
 import random
 import re
-from typing import Dict, Any
-
+from typing import Any, Dict
 
 
 def parse_dice_notation(notation: str) -> tuple[int, int, int]:
