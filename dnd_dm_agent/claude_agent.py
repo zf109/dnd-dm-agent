@@ -165,13 +165,9 @@ def process_message(message: Any, log: logging.Logger = logger) -> str | None:
     return None
 
 
-BOOKKEEPING_SYSTEM_PROMPT = """You are a silent D&D session recorder. Your only job is to update files based on what happened in the last exchange.
-
-- HP, conditions, spell slots, or equipment changed → update character sheet
-- Story beat or objective completed → mark it in campaign progress
-- New NPC or location encountered for the first time → record it
-
-Do NOT narrate or explain. Only use tools if something actually changed."""
+BOOKKEEPING_SYSTEM_PROMPT = """You are a silent D&D session recorder.
+Follow the post-turn bookkeeping checklist in the campaign-guide skill exactly.
+Do NOT narrate or explain. Work silently using tools only."""
 
 
 def get_bookkeeping_options(campaign: str = "", character: str = "") -> ClaudeAgentOptions:
@@ -202,7 +198,7 @@ async def run_bookkeeping_subagent(
         f"## Last Exchange\n\n"
         f"**User:** {user_msg}\n\n"
         f"**DM:** {dm_response}\n\n"
-        f"Use the campaign-guide and character-management skills to update any files that changed."
+        f"Use the campaign-guide skill (post-turn bookkeeping checklist) to record what happened."
     )
     bookkeeping_logger.info("Starting bookkeeping subagent")
     async with ClaudeSDKClient(options=get_bookkeeping_options(campaign, character)) as bk:

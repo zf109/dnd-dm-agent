@@ -76,9 +76,10 @@ type Action =
   | { type: 'ADD_PLAYER_MESSAGE'; content: string }
   | { type: 'ADD_SYSTEM_MESSAGE'; content: string; hidden?: boolean }
   | { type: 'APPEND_TEXT_CHUNK'; content: string }
-  | { type: 'ADD_TOOL_INDICATOR'; display_name: string }
+  | { type: 'ADD_TOOL_INDICATOR'; display_name: string; tooltip: string; source: 'dm' | 'bookkeeping' }
   | { type: 'ADD_DICE_RESULT'; notation: string; rolls: number[]; total: number; modifier: number }
   | { type: 'TURN_COMPLETE' }
+  | { type: 'BOOKKEEPING_COMPLETE' }
   | { type: 'SET_CHARACTER'; data: CharacterData; markdown: string }
   | { type: 'SET_WS_STATUS'; status: WSStatus };
 
@@ -93,7 +94,24 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, chatEntries: [...state.chatEntries, entry] };
     }
     case 'ADD_TOOL_INDICATOR': {
-      const entry: ChatEntry = { id: generateId(), kind: 'tool_indicator', display_name: action.display_name };
+      // Append to the last in-progress tool_group, or create a new one
+      let lastGroupIdx = -1;
+      for (let i = state.chatEntries.length - 1; i >= 0; i--) {
+        const e = state.chatEntries[i];
+        if (e.kind === 'tool_group' && !e.isComplete) { lastGroupIdx = i; break; }
+      }
+      const tool = { display: action.display_name, tooltip: action.tooltip, source: action.source };
+      if (lastGroupIdx >= 0) {
+        return {
+          ...state,
+          chatEntries: state.chatEntries.map((e, i) =>
+            i === lastGroupIdx && e.kind === 'tool_group'
+              ? { ...e, tools: [...e.tools, tool] }
+              : e
+          ),
+        };
+      }
+      const entry: ChatEntry = { id: generateId(), kind: 'tool_group', tools: [tool], isComplete: false };
       return { ...state, chatEntries: [...state.chatEntries, entry] };
     }
     case 'APPEND_TEXT_CHUNK': {
@@ -108,9 +126,12 @@ function reducer(state: AppState, action: Action): AppState {
         };
       } else {
         const newId = generateId();
-        const filtered = state.chatEntries.filter((e) => e.kind !== 'tool_indicator');
+        // Mark any in-progress tool_group as complete (DM response is starting)
+        const entries = state.chatEntries.map((e) =>
+          e.kind === 'tool_group' && !e.isComplete ? { ...e, isComplete: true } : e
+        );
         const entry: ChatEntry = { id: newId, kind: 'dm', content: action.content, isComplete: false };
-        return { ...state, chatEntries: [...filtered, entry], currentDMEntryId: newId };
+        return { ...state, chatEntries: [...entries, entry], currentDMEntryId: newId };
       }
     }
     case 'ADD_DICE_RESULT': {
@@ -129,9 +150,19 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         isAgentTyping: false,
         currentDMEntryId: null,
-        chatEntries: state.chatEntries
-          .filter((e) => e.kind !== 'tool_indicator')
-          .map((e) => (e.kind === 'dm' && !e.isComplete ? { ...e, isComplete: true } : e)),
+        chatEntries: state.chatEntries.map((e) => {
+          if (e.kind === 'tool_group' && !e.isComplete) return { ...e, isComplete: true };
+          if (e.kind === 'dm' && !e.isComplete) return { ...e, isComplete: true };
+          return e;
+        }),
+      };
+    }
+    case 'BOOKKEEPING_COMPLETE': {
+      return {
+        ...state,
+        chatEntries: state.chatEntries.map((e) =>
+          e.kind === 'tool_group' && !e.isComplete ? { ...e, isComplete: true } : e
+        ),
       };
     }
     case 'SET_CHARACTER':
@@ -195,7 +226,7 @@ function GameView({ session, onLeave }: { session: SessionConfig; onLeave: () =>
         dispatch({ type: 'APPEND_TEXT_CHUNK', content: msg.content });
         break;
       case 'tool_use':
-        dispatch({ type: 'ADD_TOOL_INDICATOR', display_name: msg.display_name });
+        dispatch({ type: 'ADD_TOOL_INDICATOR', display_name: msg.display_name, tooltip: msg.tooltip, source: msg.source });
         break;
       case 'tool_result': {
         const r = msg.result as Record<string, unknown>;
@@ -212,6 +243,10 @@ function GameView({ session, onLeave }: { session: SessionConfig; onLeave: () =>
       }
       case 'turn_complete':
         dispatch({ type: 'TURN_COMPLETE' });
+        fetchCharacter(activeCharacter);
+        break;
+      case 'bookkeeping_complete':
+        dispatch({ type: 'BOOKKEEPING_COMPLETE' });
         fetchCharacter(activeCharacter);
         break;
       case 'error':

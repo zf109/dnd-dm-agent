@@ -67,19 +67,85 @@ async def get_character(campaign_instance: str, character_name: str):
 # =============================================================================
 
 
-def _make_tool_display_name(tool_name: str) -> str:
-    """Convert internal tool name to user-friendly display string."""
-    names = {
-        "mcp__dnd__roll_dice": "rolling dice",
-        "mcp__dnd__create_campaign_instance": "creating campaign",
-        "Read": "reading files",
-        "Write": "writing files",
-        "Edit": "updating files",
-        "Grep": "searching knowledge",
-        "Glob": "finding files",
-        "Skill": "consulting knowledge",
-    }
-    return names.get(tool_name, tool_name.lower().replace("_", " "))
+def _make_tool_display_name(tool_name: str, tool_input: dict) -> str:
+    """Convert tool name + input into a context-aware display string."""
+    def _stem(path: str) -> str:
+        """Extract the filename stem from a path."""
+        return path.rstrip("/").split("/")[-1].replace(".md", "").replace("_", " ")
+
+    if tool_name == "mcp__dnd__roll_dice":
+        notation = tool_input.get("notation", "dice")
+        return f"Rolling {notation}"
+
+    if tool_name == "mcp__dnd__create_campaign_instance":
+        return "Creating campaign"
+
+    if tool_name in ("Read", "Write", "Edit"):
+        path = str(tool_input.get("file_path", ""))
+        verb = {"Read": "Reading", "Write": "Creating", "Edit": "Updating"}[tool_name]
+        if "/characters/" in path:
+            char = _stem(path).replace(" md", "").title()
+            action = {"Read": "Reading", "Write": "Creating", "Edit": "Updating"}[tool_name]
+            return f"{action} {char}'s sheet"
+        if "campaign_progress" in path:
+            return f"{verb} campaign progress"
+        if "campaign_log" in path:
+            return "Logging session events" if tool_name == "Edit" else f"{verb} session log"
+        if "campaign_guide" in path:
+            return "Reading campaign guide"
+        if "npcs" in path:
+            return f"{verb} NPC notes"
+        if "locations" in path:
+            return f"{verb} locations"
+        if "encounters" in path:
+            return f"{verb} encounters"
+        return f"{verb} files"
+
+    if tool_name == "Glob":
+        pattern = str(tool_input.get("pattern", ""))
+        if "characters" in pattern:
+            return "Finding characters"
+        if "campaigns" in pattern or "available_campaigns" in pattern:
+            return "Finding campaigns"
+        if "skills" in pattern:
+            return "Finding skills"
+        return "Finding files"
+
+    if tool_name == "Grep":
+        return "Searching knowledge"
+
+    if tool_name == "Skill":
+        skill_map = {
+            "campaign-guide": "Loading campaign guide",
+            "character-management": "Managing character",
+            "dnd-knowledge-store": "Consulting rulebook",
+            "dnd-dm": "Consulting DM guide",
+        }
+        skill = str(tool_input.get("skill", ""))
+        return skill_map.get(skill, "Consulting knowledge")
+
+    return tool_name.lower().replace("_", " ")
+
+
+def _make_tool_tooltip(tool_name: str, tool_input: dict) -> str:
+    """Return a detailed tooltip string for a tool call."""
+    if tool_name in ("Read", "Write", "Edit"):
+        return str(tool_input.get("file_path", ""))
+    if tool_name == "Glob":
+        return str(tool_input.get("pattern", ""))
+    if tool_name == "Grep":
+        pattern = tool_input.get("pattern", "")
+        path = tool_input.get("path", "")
+        return f'"{pattern}" in {path}' if path else f'"{pattern}"'
+    if tool_name == "Skill":
+        skill = tool_input.get("skill", "")
+        args = tool_input.get("args", "")
+        return f"{skill}: {args}" if args else skill
+    if tool_name == "mcp__dnd__roll_dice":
+        return str(tool_input.get("notation", ""))
+    if tool_name == "mcp__dnd__create_campaign_instance":
+        return f"{tool_input.get('campaign_template', '')} / {tool_input.get('instance_name', '')}"
+    return ""
 
 
 async def _forward_bookkeeping_to_ws(
@@ -101,12 +167,19 @@ async def _forward_bookkeeping_to_ws(
                             "type": "tool_use",
                             "tool_name": block.name,
                             "tool_input": block.input,
-                            "display_name": _make_tool_display_name(block.name),
+                            "display_name": _make_tool_display_name(block.name, block.input),
+                            "tooltip": _make_tool_tooltip(block.name, block.input),
+                            "source": "bookkeeping",
                         })
                     except Exception:
                         pass  # WebSocket may have closed
     except Exception as e:
         bookkeeping_logger.error(f"Bookkeeping subagent failed: {e}", exc_info=True)
+    finally:
+        try:
+            await websocket.send_json({"type": "bookkeeping_complete"})
+        except Exception:
+            pass
 
 
 @app.websocket("/ws/{session_id}")
@@ -164,7 +237,9 @@ async def websocket_endpoint(
                                 "type": "tool_use",
                                 "tool_name": block.name,
                                 "tool_input": block.input,
-                                "display_name": _make_tool_display_name(block.name),
+                                "display_name": _make_tool_display_name(block.name, block.input),
+                                "tooltip": _make_tool_tooltip(block.name, block.input),
+                                "source": "dm",
                             })
 
                         elif isinstance(block, ToolResultBlock):
