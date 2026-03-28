@@ -8,6 +8,12 @@
             "type": "command",
             "command": "jq -r '.tool_input.file_path // empty' | { read -r f; echo \"$f\" | grep -qE '\\.py$' && (uv run ruff check --fix \"$f\"; uv run ruff format \"$f\") || true; }",
             "statusMessage": "Linting..."
+          },
+          {
+            "type": "agent",
+            "prompt": "You are an independent ADR compliance reviewer with no knowledge of the current coding session. Tool input: $ARGUMENTS. Step 1: parse the JSON to extract tool_input.file_path. Step 2: if the path does not contain 'dnd_dm_agent/' or '.claude/skills/', output 'Not in scope.' and stop immediately. Step 3: use Read to read the modified file. Step 4: use Glob to list all files in docs/adr/, then Read each one. Step 5: check whether the file content or patterns violate any architectural decision — pay particular attention to the Constraint sections. Step 6: output either a list of specific violations with file:line references, or 'No ADR violations found.'",
+            "statusMessage": "Checking ADR compliance...",
+            "timeout": 60
           }
         ]
       }
