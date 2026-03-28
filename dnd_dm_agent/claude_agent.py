@@ -1,6 +1,7 @@
 """DnD Dungeon Master Agent using Claude Agent SDK."""
 
 import asyncio
+import logging
 import sys
 import uuid
 from pathlib import Path
@@ -17,7 +18,7 @@ from claude_agent_sdk import (
     create_sdk_mcp_server,
 )
 
-from .logging_config import logger
+from .logging_config import logger, dm_logger, bookkeeping_logger
 
 # Project root directory (for skills and file operations)
 PROJECT_ROOT = str(Path(__file__).parent.parent.resolve())
@@ -35,9 +36,9 @@ from .tools.campaign_instance_tools import create_campaign_instance as _create_c
 @tool("roll_dice", "Roll dice using D&D notation (e.g., '1d20+5', '2d6')", {"notation": str})
 async def roll_dice(args: dict[str, Any]) -> dict[str, Any]:
     notation = args["notation"]
-    logger.debug(f"Rolling dice: {notation}")
+    dm_logger.debug(f"Rolling dice: {notation}")
     result = _roll_dice(notation)
-    logger.info(f"Dice roll {notation} = {result}")
+    dm_logger.info(f"Dice roll {notation} = {result}")
     return {"content": [{"type": "text", "text": str(result)}]}
 
 
@@ -49,12 +50,12 @@ async def roll_dice(args: dict[str, Any]) -> dict[str, Any]:
 async def create_campaign_instance(args: dict[str, Any]) -> dict[str, Any]:
     campaign = args["campaign_template"]
     instance = args["instance_name"]
-    logger.info(f"Creating campaign instance: {campaign}_{instance}")
+    dm_logger.info(f"Creating campaign instance: {campaign}_{instance}")
     result = _create_campaign_instance(campaign, instance)
     if result.get("status") == "success":
-        logger.info(f"Campaign instance created successfully: {result.get('instance_path')}")
+        dm_logger.info(f"Campaign instance created successfully: {result.get('instance_path')}")
     else:
-        logger.error(f"Campaign creation failed: {result.get('error_message')}")
+        dm_logger.error(f"Campaign creation failed: {result.get('error_message')}")
     return {"content": [{"type": "text", "text": str(result)}]}
 
 
@@ -90,15 +91,12 @@ SYSTEM_PROMPT = """You are an experienced Dungeon Master for D&D 5th Edition.
 - Grep: Search knowledge files by pattern
 - Glob: Find knowledge files by name pattern
 
-## Campaign Tracking
-When playing active campaigns, ALWAYS use campaign-guide skill after each conversation to check if anything need to be tracked.
-
 ## Guidelines
 - Use campaign-guide skill to list available campaigns and create campaign instances
 - Use character-management skill for character creation and updates (provides templates and patterns)
 - Characters belong to campaign instances (stored in campaigns/[instance]/characters/)
 - Use dnd-knowledge-store skill when players ask about D&D rules, spells, monsters, or class features
-- Track campaign progress through Acts and Beats
+- Focus on narration and gameplay — bookkeeping (character sheet updates, campaign progress) is handled separately after each turn
 """
 
 
@@ -150,11 +148,11 @@ def get_options(permission_mode: str = "acceptEdits", campaign: str = "", charac
     )
 
 
-def process_message(message: Any) -> str | None:
+def process_message(message: Any, log: logging.Logger = logger) -> str | None:
     """
     Process a single message and apply logging.
     Returns text content if it's a TextBlock, None otherwise.
-    This function can be imported and used by REPL or other interfaces.
+    Pass a named logger (e.g. dm_logger, bookkeeping_logger) to attribute logs to the correct agent.
     """
     if isinstance(message, AssistantMessage):
         text_content = None
@@ -162,39 +160,53 @@ def process_message(message: Any) -> str | None:
             if isinstance(block, TextBlock):
                 text_content = block.text
             elif isinstance(block, ToolUseBlock):
-                # Log ALL tool uses for debugging
-                logger.debug(f"Tool invoked: {block.name} with input: {block.input}")
-
-                # Note: Skills are NOT tools - they're instruction sets loaded into context
-                # This logging is kept for backward compatibility but will likely never trigger
-                if block.name == "Skill":
-                    skill_name = block.input.get("skill", "unknown")
-                    skill_args = block.input.get("args", "")
-                    logger.info(f"Skill invoked: {skill_name}" +
-                               (f" with args: {skill_args}" if skill_args else ""))
+                log.info(f"Tool invoked: {block.name} with input: {block.input}")
         return text_content
     return None
 
 
-BOOKKEEPING_PROMPT = """Silently review the last exchange and perform any needed record-keeping.
-Do not narrate or explain — only use tools if updates are actually needed:
-- If the character's HP, conditions, spell slots, or equipment changed, update their character sheet
-- If a story beat or objective was completed, mark it in the campaign guide
-- If notable NPCs were encountered or locations visited for the first time, record them"""
+BOOKKEEPING_SYSTEM_PROMPT = """You are a silent D&D session recorder.
+Follow the post-turn bookkeeping checklist in the campaign-guide skill exactly.
+Do NOT narrate or explain. Work silently using tools only."""
 
 
-async def post_turn_bookkeeping(client: ClaudeSDKClient):
+def get_bookkeeping_options(campaign: str = "", character: str = "") -> ClaudeAgentOptions:
+    system = BOOKKEEPING_SYSTEM_PROMPT
+    if campaign and character:
+        system += f"\n\nCampaign: {campaign}\nCharacter: {character}"
+    return ClaudeAgentOptions(
+        cwd=PROJECT_ROOT,
+        setting_sources=["user", "project"],
+        allowed_tools=["Skill", "Read", "Write", "Edit", "Glob"],
+        system_prompt=system,
+        permission_mode="bypassPermissions",
+    )
+
+
+async def run_bookkeeping_subagent(
+    user_msg: str,
+    dm_response: str,
+    campaign: str = "",
+    character: str = "",
+) -> AsyncIterator[Any]:
     """
-    Run a silent post-turn bookkeeping pass after each player turn.
-    Yields agent messages so callers can optionally react to tool-use events.
-    Any text the agent produces is intentionally ignored.
+    Bookkeeping subagent with fresh context per turn.
+    Yields messages so callers can react to tool-use events (e.g. forward to UI).
+    Domain logic is delegated to campaign-guide and character-management skills.
     """
-    logger.debug("Starting post-turn bookkeeping")
-    await client.query(BOOKKEEPING_PROMPT)
-    async for message in client.receive_response():
-        process_message(message)
-        yield message
-    logger.debug("Post-turn bookkeeping complete")
+    handoff = (
+        f"## Last Exchange\n\n"
+        f"**User:** {user_msg}\n\n"
+        f"**DM:** {dm_response}\n\n"
+        f"Use the campaign-guide skill (post-turn bookkeeping checklist) to record what happened."
+    )
+    bookkeeping_logger.info("Starting bookkeeping subagent")
+    async with ClaudeSDKClient(options=get_bookkeeping_options(campaign, character)) as bk:
+        await bk.query(handoff)
+        async for message in bk.receive_response():
+            process_message(message, bookkeeping_logger)
+            yield message
+    bookkeeping_logger.info("Bookkeeping subagent complete")
 
 
 async def run_query(prompt: str, options: ClaudeAgentOptions | None = None) -> AsyncIterator[Any]:
@@ -215,13 +227,13 @@ async def run_query(prompt: str, options: ClaudeAgentOptions | None = None) -> A
     if options is None:
         options = get_options()
 
-    logger.info(f"Starting agent query: {prompt[:100]}...")
+    dm_logger.info(f"Starting agent query: {prompt[:100]}...")
 
     # Use async generator to work around SDK bug with MCP servers
     # See: https://github.com/anthropics/claude-agent-sdk-python/issues/266
     async def prompt_generator():
         session_id = str(uuid.uuid4())
-        logger.debug(f"Session ID: {session_id}")
+        dm_logger.debug(f"Session ID: {session_id}")
         yield {
             "type": "user",
             "message": {"role": "user", "content": prompt},
@@ -231,15 +243,13 @@ async def run_query(prompt: str, options: ClaudeAgentOptions | None = None) -> A
 
     try:
         async for message in query(prompt=prompt_generator(), options=options):
-            # Apply logging to each message
-            process_message(message)
-            # Yield message for caller to use
+            process_message(message, dm_logger)
             yield message
 
-        logger.info("Agent query completed successfully")
+        dm_logger.info("Agent query completed successfully")
 
     except Exception as e:
-        logger.error(f"Agent query failed: {e}", exc_info=True)
+        dm_logger.error(f"Agent query failed: {e}", exc_info=True)
         raise
 
 

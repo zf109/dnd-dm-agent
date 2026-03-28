@@ -2,7 +2,8 @@
 
 import asyncio
 from claude_agent_sdk import ClaudeSDKClient, AssistantMessage, TextBlock
-from .claude_agent import get_options, process_message, post_turn_bookkeeping
+from .claude_agent import get_options, process_message, run_bookkeeping_subagent
+from .logging_config import dm_logger
 from .logging_config import logger
 
 
@@ -30,7 +31,7 @@ async def repl():
                 response_parts = []
                 async for message in client.receive_response():
                     # Apply logging to each message (same as CLI)
-                    process_message(message)
+                    process_message(message, dm_logger)
 
                     if isinstance(message, AssistantMessage):
                         for block in message.content:
@@ -41,8 +42,8 @@ async def repl():
                 print(f"\nDM: {response}\n")
                 logger.info(f"[Turn {turn_count}] Response completed")
 
-                # Silent post-turn bookkeeping (tool calls logged at DEBUG level)
-                async for _ in post_turn_bookkeeping(client):
+                # Bookkeeping subagent: fresh context, delegates to skills
+                async for _ in run_bookkeeping_subagent(user_input, response):
                     pass
 
             except (EOFError, KeyboardInterrupt):

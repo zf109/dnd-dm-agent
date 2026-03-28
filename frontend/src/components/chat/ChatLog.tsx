@@ -3,7 +3,7 @@ import type { ChatEntry } from '../../types/messages';
 import { DMMessage } from './DMMessage';
 import { PlayerMessage } from './PlayerMessage';
 import { DiceRollEvent } from './DiceRollEvent';
-import { ToolUseEvent } from './ToolUseEvent';
+import { ToolGroup } from './ToolGroup';
 import { TypingIndicator } from './TypingIndicator';
 
 interface Props {
@@ -28,8 +28,8 @@ export function ChatLog({ entries, isTyping }: Props) {
             return <PlayerMessage key={entry.id} content={entry.content} />;
           case 'dice':
             return <DiceRollEvent key={entry.id} notation={entry.notation} rolls={entry.rolls} total={entry.total} modifier={entry.modifier} />;
-          case 'tool_indicator':
-            return <ToolUseEvent key={entry.id} display_name={entry.display_name} />;
+          case 'tool_group':
+            return <ToolGroup key={entry.id} tools={entry.tools} isComplete={entry.isComplete} />;
           case 'system':
             return <div key={entry.id} className="system-message">{entry.content}</div>;
         }

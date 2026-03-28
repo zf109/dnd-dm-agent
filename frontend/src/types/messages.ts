@@ -1,18 +1,18 @@
-export type ServerMessageType = 'text_chunk' | 'tool_use' | 'tool_result' | 'turn_complete' | 'error' | 'open_character_sheet';
+export type ServerMessageType = 'text_chunk' | 'tool_use' | 'tool_result' | 'turn_complete' | 'bookkeeping_complete' | 'error';
 
 export interface TextChunkMessage { type: 'text_chunk'; content: string; }
-export interface ToolUseMessage { type: 'tool_use'; tool_name: string; tool_input: Record<string, unknown>; display_name: string; }
+export interface ToolUseMessage { type: 'tool_use'; tool_name: string; tool_input: Record<string, unknown>; display_name: string; tooltip: string; source: 'dm' | 'bookkeeping'; }
 export interface ToolResultMessage { type: 'tool_result'; result: Record<string, unknown>; }
 export interface TurnCompleteMessage { type: 'turn_complete'; }
+export interface BookkeepingCompleteMessage { type: 'bookkeeping_complete'; }
 export interface ErrorMessage { type: 'error'; error: string; }
-export interface OpenCharacterSheetMessage { type: 'open_character_sheet'; }
-export type ServerMessage = TextChunkMessage | ToolUseMessage | ToolResultMessage | TurnCompleteMessage | ErrorMessage | OpenCharacterSheetMessage;
+export type ServerMessage = TextChunkMessage | ToolUseMessage | ToolResultMessage | TurnCompleteMessage | BookkeepingCompleteMessage | ErrorMessage;
 
 export type ChatEntry =
   | { id: string; kind: 'player'; content: string }
   | { id: string; kind: 'dm'; content: string; isComplete: boolean }
   | { id: string; kind: 'dice'; notation: string; rolls: number[]; total: number; modifier: number }
-  | { id: string; kind: 'tool_indicator'; display_name: string }
+  | { id: string; kind: 'tool_group'; tools: { display: string; tooltip: string; source: 'dm' | 'bookkeeping' }[]; isComplete: boolean }
   | { id: string; kind: 'system'; content: string };
 
 export interface CharacterData {

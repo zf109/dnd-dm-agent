@@ -18,19 +18,19 @@ def setup_logging(level: str = "INFO") -> logging.Logger:
                Can be overridden by DND_LOG_LEVEL environment variable.
 
     Returns:
-        Configured logger instance
+        Configured root logger instance
     """
     # Allow env var to override default
     level = os.environ.get("DND_LOG_LEVEL", level)
 
-    logger = logging.getLogger("dnd_dm_agent")
-    logger.setLevel(getattr(logging, level.upper()))
+    root = logging.getLogger("dnd_dm_agent")
+    root.setLevel(getattr(logging, level.upper()))
 
     # Avoid duplicate handlers
-    if logger.handlers:
-        return logger
+    if root.handlers:
+        return root
 
-    # Format: timestamp - level - message
+    # %(name)s will show dnd_dm_agent / dnd_dm_agent.dm / dnd_dm_agent.bookkeeping etc.
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
@@ -40,16 +40,23 @@ def setup_logging(level: str = "INFO") -> logging.Logger:
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
+    root.addHandler(console_handler)
 
     # File handler (DEBUG and above)
     file_handler = logging.FileHandler(LOG_DIR / "agent.log")
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+    root.addHandler(file_handler)
 
-    return logger
+    return root
 
 
-# Singleton logger instance
-logger = setup_logging()
+# All loggers inherit handlers and level from the parent "dnd_dm_agent" logger.
+# The %(name)s in the format string automatically distinguishes them in output:
+#   dnd_dm_agent             — server / general
+#   dnd_dm_agent.dm          — DM agent turns
+#   dnd_dm_agent.bookkeeping — bookkeeping subagent
+setup_logging()
+logger = logging.getLogger("dnd_dm_agent")
+dm_logger = logging.getLogger("dnd_dm_agent.dm")
+bookkeeping_logger = logging.getLogger("dnd_dm_agent.bookkeeping")

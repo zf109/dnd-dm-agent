@@ -1,5 +1,6 @@
 """FastAPI WebSocket server exposing the D&D DM Agent."""
 
+import asyncio
 import json
 from pathlib import Path
 from typing import Any
@@ -9,8 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from claude_agent_sdk import ClaudeSDKClient, AssistantMessage, TextBlock, ToolUseBlock, ToolResultBlock
 
-from .claude_agent import get_options, process_message, post_turn_bookkeeping
-from .logging_config import logger
+from .claude_agent import get_options, process_message, run_bookkeeping_subagent
+from .logging_config import logger, dm_logger, bookkeeping_logger
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -66,19 +67,119 @@ async def get_character(campaign_instance: str, character_name: str):
 # =============================================================================
 
 
-def _make_tool_display_name(tool_name: str) -> str:
-    """Convert internal tool name to user-friendly display string."""
-    names = {
-        "mcp__dnd__roll_dice": "rolling dice",
-        "mcp__dnd__create_campaign_instance": "creating campaign",
-        "Read": "reading files",
-        "Write": "writing files",
-        "Edit": "updating files",
-        "Grep": "searching knowledge",
-        "Glob": "finding files",
-        "Skill": "consulting knowledge",
-    }
-    return names.get(tool_name, tool_name.lower().replace("_", " "))
+def _make_tool_display_name(tool_name: str, tool_input: dict) -> str:
+    """Convert tool name + input into a context-aware display string."""
+    def _stem(path: str) -> str:
+        """Extract the filename stem from a path."""
+        return path.rstrip("/").split("/")[-1].replace(".md", "").replace("_", " ")
+
+    if tool_name == "mcp__dnd__roll_dice":
+        notation = tool_input.get("notation", "dice")
+        return f"Rolling {notation}"
+
+    if tool_name == "mcp__dnd__create_campaign_instance":
+        return "Creating campaign"
+
+    if tool_name in ("Read", "Write", "Edit"):
+        path = str(tool_input.get("file_path", ""))
+        verb = {"Read": "Reading", "Write": "Creating", "Edit": "Updating"}[tool_name]
+        if "/characters/" in path:
+            char = _stem(path).replace(" md", "").title()
+            action = {"Read": "Reading", "Write": "Creating", "Edit": "Updating"}[tool_name]
+            return f"{action} {char}'s sheet"
+        if "campaign_progress" in path:
+            return f"{verb} campaign progress"
+        if "campaign_log" in path:
+            return "Logging session events" if tool_name == "Edit" else f"{verb} session log"
+        if "campaign_guide" in path:
+            return "Reading campaign guide"
+        if "npcs" in path:
+            return f"{verb} NPC notes"
+        if "locations" in path:
+            return f"{verb} locations"
+        if "encounters" in path:
+            return f"{verb} encounters"
+        return f"{verb} files"
+
+    if tool_name == "Glob":
+        pattern = str(tool_input.get("pattern", ""))
+        if "characters" in pattern:
+            return "Finding characters"
+        if "campaigns" in pattern or "available_campaigns" in pattern:
+            return "Finding campaigns"
+        if "skills" in pattern:
+            return "Finding skills"
+        return "Finding files"
+
+    if tool_name == "Grep":
+        return "Searching knowledge"
+
+    if tool_name == "Skill":
+        skill_map = {
+            "campaign-guide": "Loading campaign guide",
+            "character-management": "Managing character",
+            "dnd-knowledge-store": "Consulting rulebook",
+            "dnd-dm": "Consulting DM guide",
+        }
+        skill = str(tool_input.get("skill", ""))
+        return skill_map.get(skill, "Consulting knowledge")
+
+    return tool_name.lower().replace("_", " ")
+
+
+def _make_tool_tooltip(tool_name: str, tool_input: dict) -> str:
+    """Return a detailed tooltip string for a tool call."""
+    if tool_name in ("Read", "Write", "Edit"):
+        return str(tool_input.get("file_path", ""))
+    if tool_name == "Glob":
+        return str(tool_input.get("pattern", ""))
+    if tool_name == "Grep":
+        pattern = tool_input.get("pattern", "")
+        path = tool_input.get("path", "")
+        return f'"{pattern}" in {path}' if path else f'"{pattern}"'
+    if tool_name == "Skill":
+        skill = tool_input.get("skill", "")
+        args = tool_input.get("args", "")
+        return f"{skill}: {args}" if args else skill
+    if tool_name == "mcp__dnd__roll_dice":
+        return str(tool_input.get("notation", ""))
+    if tool_name == "mcp__dnd__create_campaign_instance":
+        return f"{tool_input.get('campaign_template', '')} / {tool_input.get('instance_name', '')}"
+    return ""
+
+
+async def _forward_bookkeeping_to_ws(
+    websocket: WebSocket,
+    user_msg: str,
+    dm_response: str,
+    campaign: str,
+    character: str,
+) -> None:
+    """Forward bookkeeping subagent tool-use events to the WebSocket."""
+    try:
+        async for message in run_bookkeeping_subagent(user_msg, dm_response, campaign, character):
+            if not isinstance(message, AssistantMessage):
+                continue
+            for block in message.content:
+                if isinstance(block, ToolUseBlock):
+                    try:
+                        await websocket.send_json({
+                            "type": "tool_use",
+                            "tool_name": block.name,
+                            "tool_input": block.input,
+                            "display_name": _make_tool_display_name(block.name, block.input),
+                            "tooltip": _make_tool_tooltip(block.name, block.input),
+                            "source": "bookkeeping",
+                        })
+                    except Exception:
+                        pass  # WebSocket may have closed
+    except Exception as e:
+        bookkeeping_logger.error(f"Bookkeeping subagent failed: {e}", exc_info=True)
+    finally:
+        try:
+            await websocket.send_json({"type": "bookkeeping_complete"})
+        except Exception:
+            pass
 
 
 @app.websocket("/ws/{session_id}")
@@ -113,39 +214,35 @@ async def websocket_endpoint(
 
                 logger.info(f"[{session_id}] User input: {content[:100]}")
 
-                # Stream agent response
+                # Stream main DM response, collecting text for bookkeeping handoff
+                dm_response_parts: list[str] = []
                 await client.query(content)
 
                 async for message in client.receive_response():
-                    # Apply standard logging
-                    process_message(message)
+                    process_message(message, dm_logger)
 
                     if not isinstance(message, AssistantMessage):
                         continue
 
                     for block in message.content:
                         if isinstance(block, TextBlock) and block.text:
+                            dm_response_parts.append(block.text)
                             await websocket.send_json({
                                 "type": "text_chunk",
                                 "content": block.text,
                             })
 
                         elif isinstance(block, ToolUseBlock):
-                            # Emit tool_use event for UI indicator
                             await websocket.send_json({
                                 "type": "tool_use",
                                 "tool_name": block.name,
                                 "tool_input": block.input,
-                                "display_name": _make_tool_display_name(block.name),
+                                "display_name": _make_tool_display_name(block.name, block.input),
+                                "tooltip": _make_tool_tooltip(block.name, block.input),
+                                "source": "dm",
                             })
-                            # If agent is reading a character file, open the sheet in the UI
-                            if block.name == "Read":
-                                file_path = block.input.get("file_path", "")
-                                if "/characters/" in str(file_path) and str(file_path).endswith(".md"):
-                                    await websocket.send_json({"type": "open_character_sheet"})
 
                         elif isinstance(block, ToolResultBlock):
-                            # Parse dice roll results for special display
                             if hasattr(block, "content") and block.content:
                                 result_text = (
                                     block.content[0].text
@@ -156,29 +253,23 @@ async def websocket_endpoint(
                                     result_data = json.loads(result_text.replace("'", '"'))
                                 except (json.JSONDecodeError, AttributeError):
                                     result_data = {"raw": result_text}
-
                                 await websocket.send_json({
                                     "type": "tool_result",
                                     "result": result_data,
                                 })
 
-                # Post-turn bookkeeping: update character sheet / campaign state silently.
-                # Tool indicators are forwarded so the UI shows brief "updating files..." feedback.
-                # Text output from the agent is suppressed (bookkeeping should not narrate).
-                async for message in post_turn_bookkeeping(client):
-                    if not isinstance(message, AssistantMessage):
-                        continue
-                    for block in message.content:
-                        if isinstance(block, ToolUseBlock):
-                            await websocket.send_json({
-                                "type": "tool_use",
-                                "tool_name": block.name,
-                                "tool_input": block.input,
-                                "display_name": _make_tool_display_name(block.name),
-                            })
-
+                # Unblock the user immediately — bookkeeping runs in background
                 await websocket.send_json({"type": "turn_complete"})
                 logger.info(f"[{session_id}] Turn complete")
+
+                # Bookkeeping subagent: isolated context, delegates to skills
+                asyncio.create_task(_forward_bookkeeping_to_ws(
+                    websocket=websocket,
+                    user_msg=content,
+                    dm_response="\n".join(dm_response_parts),
+                    campaign=campaign,
+                    character=character,
+                ))
 
         except WebSocketDisconnect:
             logger.info(f"WebSocket disconnected: session={session_id}")

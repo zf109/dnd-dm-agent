@@ -4,6 +4,27 @@ Loading, playing, and tracking campaigns across sessions.
 
 ---
 
+## Post-Turn Bookkeeping (for the recorder agent)
+
+After each exchange, follow this checklist in order:
+
+**Step 1 — Always log the event** (even if nothing else changed):
+- Find the campaign instance: `Glob pattern="campaigns/[campaign_instance]/campaign_log.md"`
+- Read campaign_log.md to find the last entry
+- Append a timestamped entry for any of: combat, damage/healing, conditions, death/knockout, NPC interactions, decisions, scene changes, items gained/lost
+- Format: `**[YYYY-MM-DD HH:MM]** - [Event Type]: [Description]` with 2–5 bullet points
+- Skip only if the exchange was purely conversational with no in-game consequence
+
+**Step 2 — Update character sheet if stats changed**:
+- HP, conditions, spell slots, equipment, or status changed → use character-management skill
+
+**Step 3 — Advance campaign progress if story moved**:
+- A beat was completed, a major decision made, or act advanced → update campaign_progress.md
+
+---
+
+---
+
 ## Campaign State Files
 
 ```
