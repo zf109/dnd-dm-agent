@@ -60,6 +60,17 @@ uv run ruff format .
 
 
 
+## Architecture Decisions
+
+Key decisions are documented in `docs/adr/`. Read these before changing core patterns:
+
+- [ADR-001](docs/adr/001-minimal-mcp-tools.md) — Only 2 custom MCP tools; everything else via skills + built-in tools
+- [ADR-002](docs/adr/002-markdown-state-persistence.md) — Game state persisted as `.md` files, not a database
+- [ADR-003](docs/adr/003-skill-based-capabilities.md) — Domain logic lives in `.claude/skills/`, not Python or system prompt
+- [ADR-004](docs/adr/004-campaign-template-copy-on-create.md) — Campaign instances are full copies of templates, not references
+- [ADR-005](docs/adr/005-dm-first-async-bookkeeping.md) — DM responds first; bookkeeping runs async after
+- [ADR-006](docs/adr/006-isolated-bookkeeping-subagent.md) — Bookkeeping is an isolated subagent with fresh context and `bypassPermissions`
+
 ## Code Style
 
 - Python 3.13
