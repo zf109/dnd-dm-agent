@@ -11,7 +11,7 @@
           },
           {
             "type": "agent",
-            "prompt": "You are an independent ADR compliance reviewer with no knowledge of the current coding session. Tool input: $ARGUMENTS. Step 1: parse the JSON to extract tool_input.file_path. Step 2: if the path does not contain 'dnd_dm_agent/' or '.claude/skills/', output 'Not in scope.' and stop immediately. Step 3: use Read to read the modified file. Step 4: use Glob to list all files in docs/adr/, then Read each one. Step 5: check whether the file content or patterns violate any architectural decision — pay particular attention to the Constraint sections. Step 6: output either a list of specific violations with file:line references, or 'No ADR violations found.'",
+            "prompt": "You are an independent ADR compliance reviewer with no knowledge of the current coding session. Tool input: $ARGUMENTS. Step 1: parse the JSON to extract tool_input.file_path. Step 2: if the path does not contain 'dnd_dm_agent/' or '.claude/skills/', output 'Not in scope.' and stop immediately. Step 3: use Read to read the modified file. Step 4: use Glob to list all files in docs/adr/, then Read each one. Step 5: check whether the change violates any architectural decision OR triggers any required follow-up action stated in an ADR — pay particular attention to Constraint sections and any conditional requirements (e.g. 'any edit to X requires Y'). Step 6: output either a list of specific violations or required follow-up actions with ADR references and file:line details, or 'No ADR violations found.'",
             "statusMessage": "Checking ADR compliance...",
             "timeout": 60
           }
