@@ -61,6 +61,7 @@ function saveChatEntries(entries: ChatEntry[]) {
 interface SessionConfig {
   campaign: string;
   character: string;
+  isResume: boolean;
 }
 
 interface AppState {
@@ -177,8 +178,8 @@ function reducer(state: AppState, action: Action): AppState {
 export default function App() {
   const [session, setSession] = useState<SessionConfig | null>(loadSavedSession);
 
-  const handleStart = useCallback((campaign: string, character: string) => {
-    const config = { campaign, character };
+  const handleStart = useCallback((campaign: string, character: string, isResume: boolean) => {
+    const config = { campaign, character, isResume };
     saveSession(config);
     setSession(config);
   }, []);
@@ -280,11 +281,11 @@ function GameView({ session, onLeave }: { session: SessionConfig; onLeave: () =>
     const campaignLabel = session.campaign.replace(/_/g, ' ');
     const characterLabel = activeCharacter.replace(/_/g, ' ');
     dispatch({ type: 'ADD_SYSTEM_MESSAGE', content: `Campaign: ${campaignLabel}  ·  Character: ${characterLabel}` });
-    sendMessage({
-      type: 'user_input',
-      content: `Session started. Campaign: "${campaignLabel}". Active character: "${characterLabel}". Please load the campaign using the campaign-guide skill and greet the player in character as the DM.`,
-    });
-  }, [wsStatus, session.campaign, activeCharacter, sendMessage]);
+    const initContent = session.isResume
+      ? `Resuming session. Campaign: "${campaignLabel}". Active character: "${characterLabel}". Use the campaign-guide skill to load current state and welcome the player back with a brief recap of where they left off before asking what they'd like to do.`
+      : `Session started. Campaign: "${campaignLabel}". Active character: "${characterLabel}". Please load the campaign using the campaign-guide skill and greet the player in character as the DM.`;
+    sendMessage({ type: 'user_input', content: initContent });
+  }, [wsStatus, session.campaign, session.isResume, activeCharacter, sendMessage]);
 
   const handleSelectCharacter = useCallback((name: string) => {
     setActiveCharacter(name);
