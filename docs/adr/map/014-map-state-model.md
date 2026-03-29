@@ -79,6 +79,6 @@ The skill (ADR-015) provides guidance on when detail is worth adding.
 
 ## Consequences
 - **Enemy HP has a home.** It is not in `encounters.md` (static) or `campaign_progress.md` (too high-level). The map is the right place.
-- **Party HP is duplicated during combat.** Acceptable: the map snapshot is a convenience copy. The bookkeeping agent remains the source of truth and updates `characters/{name}.md` after each turn. The DM may update the map snapshot mid-combat for its own reference.
-- **`map_state.json` is cleared at end of combat.** When the DM calls `update_map` with `mode: "exploration"`, the grid/tokens/initiative fields are dropped. The file returns to the exploration schema.
+- **Party HP is duplicated during combat.** Acceptable: the map snapshot is a convenience copy. The bookkeeping agent is the source of truth for character files and also maintains the map snapshot. Both are written by bookkeeping after each turn.
+- **`map_state.json` is cleared at end of combat.** When bookkeeping writes `mode: "exploration"`, the grid/tokens/initiative fields are dropped. The file returns to the exploration schema.
 - **Constraint:** Do not put spell slots, inventory, or long-term character state in `map_state.json`. It is a scene-level document, not a character sheet.
