@@ -9,7 +9,7 @@ import { MapPlaceholder } from './components/map/MapPlaceholder';
 import { ChatLog } from './components/chat/ChatLog';
 import { InputBar } from './components/input/InputBar';
 import { ResizablePanels } from './components/layout/ResizablePanels';
-import { SessionSetup } from './components/SessionSetup';
+import { CampaignBrowser } from './components/CampaignBrowser';
 import { SidebarPanel } from './components/sidebar/SidebarPanel';
 import { CharacterSheetModal } from './components/character/CharacterSheetModal';
 
@@ -185,7 +185,7 @@ export default function App() {
   }, []);
 
   if (!session) {
-    return <SessionSetup onStart={handleStart} />;
+    return <CampaignBrowser onStart={handleStart} />;
   }
 
   return <GameView session={session} onLeave={() => {
