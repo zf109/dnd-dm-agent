@@ -31,7 +31,13 @@ def _parse_instance_meta(instance_dir: Path) -> dict:
     """Parse campaign_progress.md to extract display metadata for an instance."""
     progress = instance_dir / "campaign_progress.md"
     name = instance_dir.name
-    defaults = {"name": name, "display_name": name.replace("_", " ").title(), "character": "", "beat": ""}
+    defaults = {
+        "name": name,
+        "display_name": name.replace("_", " ").title(),
+        "character": "",
+        "character_file": "",
+        "beat": "",
+    }
 
     if not progress.exists():
         return defaults
@@ -61,7 +67,18 @@ def _parse_instance_meta(instance_dir: Path) -> dict:
     else:
         beat = ""
 
-    return {"name": name, "display_name": display_name, "character": character, "beat": beat}
+    # character_file: stem of first file in characters/ dir (used by frontend for WS params)
+    chars_dir = instance_dir / "characters"
+    char_files = sorted(chars_dir.glob("*.md")) if chars_dir.exists() else []
+    character_file = char_files[0].stem if char_files else ""
+
+    return {
+        "name": name,
+        "display_name": display_name,
+        "character": character,
+        "character_file": character_file,
+        "beat": beat,
+    }
 
 
 # =============================================================================

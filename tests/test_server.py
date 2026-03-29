@@ -16,6 +16,7 @@ def instance_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(srv, "PROJECT_ROOT", tmp_path)
     inst = tmp_path / "campaigns" / "a_most_potent_brew_thork_adventure"
     (inst / "characters").mkdir(parents=True)
+    (inst / "characters" / "thork.md").write_text("# Thork")
     (inst / "campaign_progress.md").write_text(
         "# A Most Potent Brew - thork_adventure\n\n"
         "**Instance:** thork_adventure\n"
@@ -40,6 +41,7 @@ def test_list_campaigns_enriched(instance_dir):
     assert inst["name"] == "a_most_potent_brew_thork_adventure"
     assert inst["display_name"] == "A Most Potent Brew — Thork Adventure"
     assert inst["character"] == "Thork Ironforge · Mountain Dwarf Fighter 1"
+    assert inst["character_file"] == "thork"
     assert inst["beat"] == "Act 1 · Beat 1.2 - Into the Cellar"
 
 
