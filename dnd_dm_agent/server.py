@@ -52,7 +52,7 @@ def _parse_instance_meta(instance_dir: Path) -> dict:
 
     # beat: Act N + Beat text
     act_m = re.search(r"- \*\*Act:\*\*\s*Act\s*(\d+)", text)
-    beat_m = re.search(r"- \*\*Beat:\*\*\s*(.+?)(?:\s*[\(\-].*)?$", text, re.MULTILINE)
+    beat_m = re.search(r"- \*\*Beat:\*\*\s*(.+?)(?:\s*\([^)]*\))?$", text, re.MULTILINE)
     if beat_m:
         beat_text = beat_m.group(1).strip()
         beat = f"Act {act_m.group(1)} \u00b7 {beat_text}" if act_m else beat_text

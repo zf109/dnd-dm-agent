@@ -23,7 +23,7 @@ def instance_dir(tmp_path, monkeypatch):
         "**Created:** 2026-03-28\n\n"
         "## Current Progress\n"
         "- **Act:** Act 1 - The Brewery Investigation\n"
-        "- **Beat:** Beat 1.2: Into the Cellar\n\n"
+        "- **Beat:** Beat 1.2 - Into the Cellar\n\n"
         "## Party\n"
         "- **Thork Ironforge** (Mountain Dwarf Fighter 1) - HP: 10/12\n\n"
         "## Key Decisions\n"
@@ -40,7 +40,7 @@ def test_list_campaigns_enriched(instance_dir):
     assert inst["name"] == "a_most_potent_brew_thork_adventure"
     assert inst["display_name"] == "A Most Potent Brew — Thork Adventure"
     assert inst["character"] == "Thork Ironforge · Mountain Dwarf Fighter 1"
-    assert inst["beat"] == "Act 1 · Beat 1.2: Into the Cellar"
+    assert inst["beat"] == "Act 1 · Beat 1.2 - Into the Cellar"
 
 
 def test_list_campaigns_empty(tmp_path, monkeypatch):
