@@ -31,14 +31,16 @@ const SESSION_ID = getOrCreateSessionId();
 function loadSavedSession(): SessionConfig | null {
   try {
     const raw = sessionStorage.getItem('dnd-session-config');
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return { campaign: parsed.campaign, character: parsed.character, isResume: false };
   } catch {
     return null;
   }
 }
 
 function saveSession(config: SessionConfig) {
-  sessionStorage.setItem('dnd-session-config', JSON.stringify(config));
+  sessionStorage.setItem('dnd-session-config', JSON.stringify({ campaign: config.campaign, character: config.character }));
 }
 
 const CHAT_KEY = `dnd-chat-${SESSION_ID}`;

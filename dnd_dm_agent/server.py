@@ -157,6 +157,8 @@ async def create_campaign(req: CreateCampaignRequest):
 
 @app.delete("/api/campaigns/{campaign_instance}", status_code=204)
 async def delete_campaign(campaign_instance: str):
+    if "/" in campaign_instance or "\\" in campaign_instance or ".." in campaign_instance:
+        raise HTTPException(status_code=400, detail="Invalid instance name")
     instance_path = PROJECT_ROOT / "campaigns" / campaign_instance
     if not instance_path.exists() or not instance_path.is_dir():
         raise HTTPException(status_code=404, detail=f"Instance '{campaign_instance}' not found")

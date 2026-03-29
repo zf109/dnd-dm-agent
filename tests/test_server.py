@@ -145,3 +145,8 @@ def test_delete_campaign(deletable_instance):
 def test_delete_campaign_not_found(deletable_instance):
     resp = client.delete("/api/campaigns/nonexistent_campaign")
     assert resp.status_code == 404
+
+
+def test_delete_campaign_path_traversal(deletable_instance):
+    resp = client.delete("/api/campaigns/..%2Fsomething")
+    assert resp.status_code in (400, 404)
