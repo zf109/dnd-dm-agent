@@ -121,3 +121,25 @@ def test_create_campaign_duplicate(create_env):
 def test_create_campaign_bad_template(create_env):
     resp = client.post("/api/campaigns", json={"template": "nonexistent", "character": "dwarf_fighter"})
     assert resp.status_code == 400
+
+
+@pytest.fixture
+def deletable_instance(tmp_path, monkeypatch):
+    import dnd_dm_agent.server as srv
+
+    monkeypatch.setattr(srv, "PROJECT_ROOT", tmp_path)
+    inst = tmp_path / "campaigns" / "a_most_potent_brew_thork_adventure"
+    (inst / "characters").mkdir(parents=True)
+    (inst / "campaign_progress.md").write_text("# test")
+    return tmp_path
+
+
+def test_delete_campaign(deletable_instance):
+    resp = client.delete("/api/campaigns/a_most_potent_brew_thork_adventure")
+    assert resp.status_code == 204
+    assert not (deletable_instance / "campaigns" / "a_most_potent_brew_thork_adventure").exists()
+
+
+def test_delete_campaign_not_found(deletable_instance):
+    resp = client.delete("/api/campaigns/nonexistent_campaign")
+    assert resp.status_code == 404

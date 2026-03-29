@@ -3,6 +3,7 @@
 import asyncio
 import json
 import re
+import shutil
 from pathlib import Path
 
 from claude_agent_sdk import AssistantMessage, ClaudeSDKClient, TextBlock, ToolResultBlock, ToolUseBlock
@@ -135,6 +136,14 @@ async def create_campaign(req: CreateCampaignRequest):
         dst.write_text(pregen_src.read_text())
 
     return {"instance": f"{req.template}_{req.character}", "character": req.character}
+
+
+@app.delete("/api/campaigns/{campaign_instance}", status_code=204)
+async def delete_campaign(campaign_instance: str):
+    instance_path = PROJECT_ROOT / "campaigns" / campaign_instance
+    if not instance_path.exists() or not instance_path.is_dir():
+        raise HTTPException(status_code=404, detail=f"Instance '{campaign_instance}' not found")
+    shutil.rmtree(instance_path)
 
 
 @app.get("/api/campaigns/{campaign_instance}/characters")
