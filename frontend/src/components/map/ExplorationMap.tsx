@@ -38,6 +38,7 @@ export function ExplorationMap({ graph }: ExplorationMapProps) {
       viewBox={`0 0 ${svgW} ${svgH}`}
       className="exploration-map"
       preserveAspectRatio="xMidYMid meet"
+      width="100%"
     >
       {/* edges */}
       {graph.edges.map((e, i) => {
@@ -46,7 +47,7 @@ export function ExplorationMap({ graph }: ExplorationMapProps) {
         if (!from || !to) return null;
         return (
           <line
-            key={i}
+            key={`${e.from}-${e.to}`}
             x1={from.cx} y1={from.cy}
             x2={to.cx} y2={to.cy}
             stroke="#3a3228"

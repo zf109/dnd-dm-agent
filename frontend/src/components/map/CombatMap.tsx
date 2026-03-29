@@ -43,6 +43,7 @@ export function CombatMap({ grid, terrain, tokens, current_turn, round }: Combat
       viewBox={`0 0 ${W} ${H}`}
       className="combat-map"
       preserveAspectRatio="xMidYMid meet"
+      width="100%"
     >
       {/* floor */}
       <rect width={W} height={H} fill="#1c1a17" />
@@ -59,9 +60,10 @@ export function CombatMap({ grid, terrain, tokens, current_turn, round }: Combat
 
       {/* terrain */}
       {terrain.map((t, i) => {
+        const stableKey = `${t.type}-${t.x ?? t.x1 ?? i}-${t.y ?? t.y1 ?? i}`;
         if (t.type === 'wall' && t.x1 !== undefined) {
           return (
-            <line key={i}
+            <line key={stableKey}
               x1={t.x1 * CELL} y1={(t.y1 ?? 0) * CELL}
               x2={(t.x2 ?? 0) * CELL} y2={(t.y2 ?? 0) * CELL}
               stroke="#5a4828" strokeWidth={6} strokeLinecap="round"
@@ -70,11 +72,25 @@ export function CombatMap({ grid, terrain, tokens, current_turn, round }: Combat
         }
         if (t.x !== undefined) {
           return (
-            <rect key={i}
-              x={t.x * CELL + 4} y={(t.y ?? 0) * CELL + 4}
-              width={CELL - 8} height={CELL - 8} rx={3}
-              fill="#2e2416" stroke="#5a4828" strokeWidth={1.5}
-            />
+            <g key={stableKey}>
+              <rect
+                x={t.x * CELL + 4} y={(t.y ?? 0) * CELL + 4}
+                width={CELL - 8} height={CELL - 8} rx={3}
+                fill="#2e2416" stroke="#5a4828" strokeWidth={1.5}
+              />
+              {t.label && (
+                <text
+                  x={t.x * CELL + CELL / 2}
+                  y={(t.y ?? 0) * CELL + CELL / 2 + 4}
+                  textAnchor="middle"
+                  fontSize={7}
+                  fill="#8a7050"
+                  fontFamily="Georgia, serif"
+                >
+                  {t.label}
+                </text>
+              )}
+            </g>
           );
         }
         return null;
@@ -87,7 +103,7 @@ export function CombatMap({ grid, terrain, tokens, current_turn, round }: Combat
         const r = 16;
         const isDead = token.conditions.includes('dead');
         const isActive = name === current_turn;
-        const hpFrac = token.max_hp > 0 ? token.hp / token.max_hp : 0;
+        const hpFrac = token.max_hp > 0 ? Math.max(0, Math.min(1, token.hp / token.max_hp)) : 0;
         const hpColor = hpFrac > 0.5 ? '#3a7aaa' : hpFrac > 0.25 ? '#aa7030' : '#aa3020';
         const fill = isDead ? '#2a2420' : token.type === 'party' ? '#1e4a6a' : '#4a1a12';
         const stroke = isDead ? '#3a3630' : token.type === 'party' ? '#4a8ab0' : '#c05040';
