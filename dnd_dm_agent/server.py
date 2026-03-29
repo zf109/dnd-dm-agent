@@ -8,6 +8,7 @@ from pathlib import Path
 from claude_agent_sdk import AssistantMessage, ClaudeSDKClient, TextBlock, ToolResultBlock, ToolUseBlock
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from .claude_agent import get_options, process_message, run_bookkeeping_subagent
 from .logging_config import bookkeeping_logger, dm_logger, logger
@@ -105,6 +106,35 @@ async def list_templates():
             }
         )
     return {"templates": result}
+
+
+class CreateCampaignRequest(BaseModel):
+    template: str
+    character: str
+
+
+@app.post("/api/campaigns", status_code=201)
+async def create_campaign(req: CreateCampaignRequest):
+    from .tools.campaign_instance_tools import create_campaign_instance
+
+    template_path = PROJECT_ROOT / "available_campaigns" / req.template
+    if not template_path.exists():
+        raise HTTPException(status_code=400, detail=f"Template '{req.template}' not found")
+
+    result = create_campaign_instance(req.template, req.character)
+
+    if result["status"] == "error":
+        if "already exists" in result.get("error_message", ""):
+            raise HTTPException(status_code=409, detail=result["error_message"])
+        raise HTTPException(status_code=500, detail=result["error_message"])
+
+    pregen_src = template_path / "pregenerated_characters" / f"{req.character}.md"
+    if pregen_src.exists():
+        instance_dir = PROJECT_ROOT / "campaigns" / f"{req.template}_{req.character}"
+        dst = instance_dir / "characters" / f"{req.character}.md"
+        dst.write_text(pregen_src.read_text())
+
+    return {"instance": f"{req.template}_{req.character}", "character": req.character}
 
 
 @app.get("/api/campaigns/{campaign_instance}/characters")

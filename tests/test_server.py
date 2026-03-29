@@ -84,3 +84,40 @@ def test_list_templates_empty(tmp_path, monkeypatch):
     resp = client.get("/api/templates")
     assert resp.status_code == 200
     assert resp.json() == {"templates": []}
+
+
+@pytest.fixture
+def create_env(tmp_path, monkeypatch):
+    """Temp dir with one template and one pregenerated character."""
+    import dnd_dm_agent.server as srv
+    import dnd_dm_agent.tools.campaign_instance_tools as cit
+
+    monkeypatch.setattr(srv, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(cit, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(cit, "CAMPAIGNS_DIR", tmp_path / "campaigns")
+    pregen = tmp_path / "available_campaigns" / "a_most_potent_brew" / "pregenerated_characters"
+    pregen.mkdir(parents=True)
+    (pregen / "dwarf_fighter.md").write_text("# Dwarf Fighter\nHP: 12/12")
+    return tmp_path
+
+
+def test_create_campaign(create_env):
+    resp = client.post("/api/campaigns", json={"template": "a_most_potent_brew", "character": "dwarf_fighter"})
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["instance"] == "a_most_potent_brew_dwarf_fighter"
+    assert data["character"] == "dwarf_fighter"
+    char_file = create_env / "campaigns" / "a_most_potent_brew_dwarf_fighter" / "characters" / "dwarf_fighter.md"
+    assert char_file.exists()
+    assert "HP: 12/12" in char_file.read_text()
+
+
+def test_create_campaign_duplicate(create_env):
+    client.post("/api/campaigns", json={"template": "a_most_potent_brew", "character": "dwarf_fighter"})
+    resp = client.post("/api/campaigns", json={"template": "a_most_potent_brew", "character": "dwarf_fighter"})
+    assert resp.status_code == 409
+
+
+def test_create_campaign_bad_template(create_env):
+    resp = client.post("/api/campaigns", json={"template": "nonexistent", "character": "dwarf_fighter"})
+    assert resp.status_code == 400
