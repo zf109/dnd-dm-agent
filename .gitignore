@@ -193,3 +193,6 @@ config/keys.json
 
 # ignore campaign instances
 campaigns/
+
+# brainstorming session files
+.superpowers/
