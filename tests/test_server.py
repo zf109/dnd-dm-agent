@@ -50,3 +50,37 @@ def test_list_campaigns_empty(tmp_path, monkeypatch):
     resp = client.get("/api/campaigns")
     assert resp.status_code == 200
     assert resp.json() == {"instances": []}
+
+
+@pytest.fixture
+def templates_dir(tmp_path, monkeypatch):
+    import dnd_dm_agent.server as srv
+
+    monkeypatch.setattr(srv, "PROJECT_ROOT", tmp_path)
+    pregen = tmp_path / "available_campaigns" / "a_most_potent_brew" / "pregenerated_characters"
+    pregen.mkdir(parents=True)
+    (pregen / "dwarf_fighter.md").write_text("# Dwarf Fighter")
+    (pregen / "elf_wizard.md").write_text("# Elf Wizard")
+    return tmp_path
+
+
+def test_list_templates(templates_dir):
+    resp = client.get("/api/templates")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data["templates"]) == 1
+    t = data["templates"][0]
+    assert t["name"] == "a_most_potent_brew"
+    assert t["display_name"] == "A Most Potent Brew"
+    char_names = [c["name"] for c in t["characters"]]
+    assert "dwarf_fighter" in char_names
+    assert "elf_wizard" in char_names
+
+
+def test_list_templates_empty(tmp_path, monkeypatch):
+    import dnd_dm_agent.server as srv
+
+    monkeypatch.setattr(srv, "PROJECT_ROOT", tmp_path)
+    resp = client.get("/api/templates")
+    assert resp.status_code == 200
+    assert resp.json() == {"templates": []}

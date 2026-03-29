@@ -81,6 +81,32 @@ async def list_campaigns():
     return {"instances": [_parse_instance_meta(d) for d in dirs]}
 
 
+@app.get("/api/templates")
+async def list_templates():
+    templates_dir = PROJECT_ROOT / "available_campaigns"
+    if not templates_dir.exists():
+        return {"templates": []}
+    result = []
+    for d in sorted(templates_dir.iterdir()):
+        if not d.is_dir():
+            continue
+        pregen = d / "pregenerated_characters"
+        characters = []
+        if pregen.exists():
+            characters = sorted(
+                [{"name": f.stem, "display_name": f.stem.replace("_", " ").title()} for f in pregen.glob("*.md")],
+                key=lambda c: c["name"],
+            )
+        result.append(
+            {
+                "name": d.name,
+                "display_name": d.name.replace("_", " ").title(),
+                "characters": characters,
+            }
+        )
+    return {"templates": result}
+
+
 @app.get("/api/campaigns/{campaign_instance}/characters")
 async def list_characters(campaign_instance: str):
     chars_dir = PROJECT_ROOT / "campaigns" / campaign_instance / "characters"
