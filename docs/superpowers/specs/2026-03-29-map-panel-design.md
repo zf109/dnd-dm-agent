@@ -224,6 +224,16 @@ Extends existing panel styling. Map fills the top panel area. SVG scales to fill
 
 ---
 
+## ADR Compliance Notes
+
+- **ADR-002 (JSON exception):** `map_state.json` and `maps/{room_id}.json` use JSON, not markdown. ADR-002 has been updated to permit this for coordinate-based spatial data that cannot be expressed cleanly in markdown.
+- **ADR-010 (eval gate):** Adding Step 4 to `campaign_tracking.md` modifies `.claude/skills/campaign-guide/`. Before merging that change, run the bookkeeping eval suite and confirm all 4 scenarios pass:
+  ```bash
+  uv run pytest tests/integration/test_bookkeeping_evals.py -v
+  ```
+
+---
+
 ## Out of Scope
 
 - Option B (structured DM output block for precise coordinates) — documented in ADR-015, implement only if grid precision becomes a concrete complaint
