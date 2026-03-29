@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campaign Browser — Mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary:      #1a1a1a;
+      --bg-secondary:    #2d2d2d;
+      --bg-panel:        #252525;
+      --accent-gold:     #c9a84c;
+      --accent-gold-dim: #8b6914;
+      --text-primary:    #e8e0d0;
+      --text-muted:      #8a8070;
+      --hp-red:          #8b2020;
+      --border-color:    #3d3d3d;
+      --font-serif:      'Cinzel', 'Palatino Linotype', serif;
+      --font-serif-body: 'Lora', 'Georgia', serif;
+      --font-sans:       'Segoe UI', system-ui, sans-serif;
+    }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    /* ── Browser container ── */
+    .browser {
+      width: 100%;
+      max-width: 640px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .browser-header {
+      padding: 32px 32px 24px;
+      border-bottom: 1px solid var(--border-color);
+      text-align: center;
+    }
+    .browser-title {
+      font-family: var(--font-serif);
+      font-size: 1.6rem;
+      color: var(--accent-gold);
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .browser-subtitle {
+      font-family: var(--font-serif-body);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* ── Section labels ── */
+    .section-label {
+      font-family: var(--font-serif);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-gold-dim);
+      padding: 20px 32px 10px;
+    }
+
+    /* ── Campaign list ── */
+    .campaign-list {
+      padding: 0 24px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .campaign-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-panel);
+      transition: border-color 0.15s;
+    }
+    .campaign-row:hover {
+      border-color: var(--accent-gold-dim);
+    }
+
+    .campaign-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .campaign-name {
+      font-family: var(--font-serif);
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .campaign-meta {
+      font-family: var(--font-serif-body);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .campaign-meta .beat {
+      font-style: italic;
+    }
+    .campaign-meta .sep {
+      margin: 0 6px;
+      opacity: 0.4;
+    }
+
+    .campaign-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn-resume {
+      padding: 6px 16px;
+      font-family: var(--font-serif);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      color: var(--accent-gold);
+      background: transparent;
+      border: 1px solid var(--accent-gold);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-resume:hover {
+      background: rgba(201, 168, 76, 0.12);
+    }
+
+    .btn-delete {
+      padding: 6px 10px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .btn-delete:hover {
+      color: #c0392b;
+      border-color: #c0392b44;
+    }
+
+    /* Delete confirm state */
+    .campaign-row.confirming {
+      border-color: #c0392b44;
+    }
+    .confirm-prompt {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: #c0392b;
+      flex-shrink: 0;
+    }
+    .btn-confirm-yes {
+      padding: 4px 10px;
+      font-size: 0.72rem;
+      color: #c0392b;
+      background: transparent;
+      border: 1px solid #c0392b;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-confirm-cancel {
+      padding: 4px 10px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      padding: 28px 32px;
+      text-align: center;
+      font-family: var(--font-serif-body);
+      font-style: italic;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border: 1px dashed var(--border-color);
+      border-radius: 6px;
+      margin: 0 24px 8px;
+    }
+
+    /* ── New campaign form ── */
+    .new-campaign {
+      padding: 8px 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .form-select {
+      flex: 1;
+      padding: 9px 12px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      appearance: none;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .form-select:focus {
+      outline: none;
+      border-color: var(--accent-gold-dim);
+    }
+
+    .btn-start {
+      width: 100%;
+      padding: 11px;
+      font-family: var(--font-serif);
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      color: var(--bg-primary);
+      background: var(--accent-gold);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-start:hover { opacity: 0.88; }
+    .btn-start:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 4px 0;
+    }
+
+    /* ── Annotation (mockup only) ── */
+    .annotation {
+      position: relative;
+    }
+    .annotation::after {
+      content: attr(data-note);
+      position: absolute;
+      right: -220px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 200px;
+      font-size: 0.7rem;
+      color: #5a8a5a;
+      font-family: var(--font-sans);
+      line-height: 1.4;
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+
+<div class="browser">
+
+  <!-- Header -->
+  <div class="browser-header">
+    <h1 class="browser-title">⚔ D&D DM Agent</h1>
+    <p class="browser-subtitle">Choose an adventure or begin a new one</p>
+  </div>
+
+  <!-- In-progress list -->
+  <div class="section-label">Adventures in Progress</div>
+
+  <div class="campaign-list">
+
+    <!-- Normal row -->
+    <div class="campaign-row annotation" data-note="Primary row state">
+      <div class="campaign-info">
+        <div class="campaign-name">A Most Potent Brew — Thork Adventure</div>
+        <div class="campaign-meta">
+          Thork Ironforge · Dwarf Fighter 1
+          <span class="sep">·</span>
+          <span class="beat">Act 1 · Beat 1.2: Into the Cellar</span>
+        </div>
+      </div>
+      <div class="campaign-actions">
+        <button class="btn-resume">Resume</button>
+        <button class="btn-delete">✕</button>
+      </div>
+    </div>
+
+    <!-- Another row -->
+    <div class="campaign-row">
+      <div class="campaign-info">
+        <div class="campaign-name">A Most Potent Brew — Sapphire Adventure</div>
+        <div class="campaign-meta">
+          Sapphire Star · Elf Wizard 1
+          <span class="sep">·</span>
+          <span class="beat">Act 1 · Beat 1.1: The Job Offer</span>
+        </div>
+      </div>
+      <div class="campaign-actions">
+        <button class="btn-resume">Resume</button>
+        <button class="btn-delete">✕</button>
+      </div>
+    </div>
+
+    <!-- Delete confirm state -->
+    <div class="campaign-row confirming annotation" data-note="Inline confirm — no modal">
+      <div class="campaign-info">
+        <div class="campaign-name">A Most Potent Brew — Test Run</div>
+        <div class="campaign-meta">
+          Merlin · Human Wizard 1
+          <span class="sep">·</span>
+          <span class="beat">Act 1 · Beat 1.1: The Job Offer</span>
+        </div>
+      </div>
+      <div class="confirm-prompt">
+        Delete this adventure?
+        <button class="btn-confirm-yes">Yes</button>
+        <button class="btn-confirm-cancel">Cancel</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="divider" style="margin: 12px 0;"></div>
+
+  <!-- New campaign -->
+  <div class="section-label">Start New Adventure</div>
+
+  <div class="new-campaign">
+    <div class="form-row">
+      <select class="form-select">
+        <option value="">— Select a campaign —</option>
+        <option selected>A Most Potent Brew</option>
+      </select>
+      <select class="form-select">
+        <option value="">— Select a character —</option>
+        <option selected>Thork Ironforge</option>
+        <option>Sapphire Star</option>
+        <option>Elara Moonwhisper</option>
+      </select>
+    </div>
+    <button class="btn-start">Start New Adventure</button>
+  </div>
+
+</div>
+
+</body>
+</html>

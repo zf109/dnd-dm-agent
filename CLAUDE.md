@@ -80,6 +80,17 @@ Decisions about the harness layer that validates and guards the D&D agent's runt
 - [ADR-009](docs/adr/agent-harness/009-bookkeeping-silence-check.md) — Rejected: post-hoc text-length check adds noise without action; evals cover the real failure mode
 - [ADR-010](docs/adr/agent-harness/010-eval-regression-gate.md) — Eval suite must pass before merging changes to `campaign-guide` skill or bookkeeping pipeline; enforced via ADR compliance reviewer hook
 
+### Session Management (`docs/adr/session-management/`)
+
+Decisions about the session start, resume, and campaign browser flow:
+
+- [ADR-011](docs/adr/session-management/011-session-management-and-resume.md) — Campaign browser replaces dropdowns; resume sends a recap-oriented init message; no server-side chat storage
+- [ADR-012](docs/adr/session-management/012-campaign-browser-frontend-design.md) — Campaign browser UI: list + inline delete + new campaign form; `SessionSetup.tsx` replaced by `CampaignBrowser`
+
+## Git Workflow
+
+Trunk-based: branch directly off `master`, keep branches short-lived (days not weeks), always merge back via PR. No direct commits to `master`. No release branches or long-lived feature branches.
+
 ## Eval Regression Gate
 
 **Before merging changes to either of these, run the bookkeeping eval suite and ensure all 4 pass:**
