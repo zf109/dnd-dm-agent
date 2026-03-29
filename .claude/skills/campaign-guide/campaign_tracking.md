@@ -21,6 +21,37 @@ After each exchange, follow this checklist in order:
 **Step 3 — Advance campaign progress if story moved**:
 - A beat was completed, a major decision made, or act advanced → update campaign_progress.md
 
+**Step 4 — Update map state if location or combat state changed**:
+- Find map state: `campaigns/{instance}/map_state.json`
+- Read `locations.md` to confirm valid room ids before writing
+
+**Exploration (party moved to new area):**
+- Write `mode: "exploration"`, `room: "{room_id}"` (use id from locations.md)
+- Update `graph.party_location` to the new room id
+- Mark node `visited: true` if first visit
+- Build graph nodes/edges from locations.md if not yet initialised
+
+**Combat start:**
+- Write `mode: "combat"`, `room: "{current_room_id}"`
+- Initialise tokens: party HP from character files, enemy HP from encounters.md stat blocks
+- Token type: `"party"` or `"enemy"`
+- Infer starting positions from DM's narrative (relative placement, not coordinates)
+- Set `initiative` order and `current_turn` from DM's narration
+- Set `round: 1`
+
+**Mid-combat (after each significant action):**
+- Update token HP and conditions from DM's narrative
+- Update token position if DM described movement
+- Advance `current_turn` and `round` as turns pass
+- Mark dead tokens with `conditions: ["dead"]` — do not remove from file
+
+**Combat end:**
+- Write `mode: "exploration"`, preserve `room` and `graph`
+- Drop `tokens`, `initiative`, `current_turn`, `round` fields
+
+**When to skip:**
+- Purely conversational exchange with no movement, combat, or scene change
+
 ---
 
 ---
