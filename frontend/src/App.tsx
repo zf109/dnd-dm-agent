@@ -9,7 +9,7 @@ import { MapPlaceholder } from './components/map/MapPlaceholder';
 import { ChatLog } from './components/chat/ChatLog';
 import { InputBar } from './components/input/InputBar';
 import { ResizablePanels } from './components/layout/ResizablePanels';
-import { SessionSetup } from './components/SessionSetup';
+import { CampaignBrowser } from './components/CampaignBrowser';
 import { SidebarPanel } from './components/sidebar/SidebarPanel';
 import { CharacterSheetModal } from './components/character/CharacterSheetModal';
 
@@ -31,14 +31,16 @@ const SESSION_ID = getOrCreateSessionId();
 function loadSavedSession(): SessionConfig | null {
   try {
     const raw = sessionStorage.getItem('dnd-session-config');
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return { campaign: parsed.campaign, character: parsed.character, isResume: false };
   } catch {
     return null;
   }
 }
 
 function saveSession(config: SessionConfig) {
-  sessionStorage.setItem('dnd-session-config', JSON.stringify(config));
+  sessionStorage.setItem('dnd-session-config', JSON.stringify({ campaign: config.campaign, character: config.character }));
 }
 
 const CHAT_KEY = `dnd-chat-${SESSION_ID}`;
@@ -61,6 +63,7 @@ function saveChatEntries(entries: ChatEntry[]) {
 interface SessionConfig {
   campaign: string;
   character: string;
+  isResume: boolean;
 }
 
 interface AppState {
@@ -177,14 +180,14 @@ function reducer(state: AppState, action: Action): AppState {
 export default function App() {
   const [session, setSession] = useState<SessionConfig | null>(loadSavedSession);
 
-  const handleStart = useCallback((campaign: string, character: string) => {
-    const config = { campaign, character };
+  const handleStart = useCallback((campaign: string, character: string, isResume: boolean) => {
+    const config = { campaign, character, isResume };
     saveSession(config);
     setSession(config);
   }, []);
 
   if (!session) {
-    return <SessionSetup onStart={handleStart} />;
+    return <CampaignBrowser onStart={handleStart} />;
   }
 
   return <GameView session={session} onLeave={() => {
@@ -280,11 +283,11 @@ function GameView({ session, onLeave }: { session: SessionConfig; onLeave: () =>
     const campaignLabel = session.campaign.replace(/_/g, ' ');
     const characterLabel = activeCharacter.replace(/_/g, ' ');
     dispatch({ type: 'ADD_SYSTEM_MESSAGE', content: `Campaign: ${campaignLabel}  ·  Character: ${characterLabel}` });
-    sendMessage({
-      type: 'user_input',
-      content: `Session started. Campaign: "${campaignLabel}". Active character: "${characterLabel}". Please load the campaign using the campaign-guide skill and greet the player in character as the DM.`,
-    });
-  }, [wsStatus, session.campaign, activeCharacter, sendMessage]);
+    const initContent = session.isResume
+      ? `Resuming session. Campaign: "${campaignLabel}". Active character: "${characterLabel}". Use the campaign-guide skill to load current state and welcome the player back with a brief recap of where they left off before asking what they'd like to do.`
+      : `Session started. Campaign: "${campaignLabel}". Active character: "${characterLabel}". Please load the campaign using the campaign-guide skill and greet the player in character as the DM.`;
+    sendMessage({ type: 'user_input', content: initContent });
+  }, [wsStatus, session.campaign, session.isResume, activeCharacter, sendMessage]);
 
   const handleSelectCharacter = useCallback((name: string) => {
     setActiveCharacter(name);

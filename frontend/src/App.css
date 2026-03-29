@@ -1110,3 +1110,267 @@ body {
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+/* ── Campaign Browser ── */
+.browser-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+
+.browser {
+  width: 100%;
+  max-width: 640px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.browser-header {
+  padding: 32px 32px 24px;
+  border-bottom: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.browser-title {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  color: var(--accent-gold);
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.browser-subtitle {
+  font-family: var(--font-serif-body);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.section-label {
+  font-family: var(--font-serif);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-gold-dim);
+  padding: 20px 32px 10px;
+}
+
+.campaign-list {
+  padding: 0 24px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campaign-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-panel);
+  transition: border-color 0.15s;
+}
+
+.campaign-row:hover {
+  border-color: var(--accent-gold-dim);
+}
+
+.campaign-row.confirming {
+  border-color: rgba(192, 57, 43, 0.27);
+}
+
+.campaign-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.campaign-name {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.campaign-meta {
+  font-family: var(--font-serif-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.campaign-meta .beat { font-style: italic; }
+.campaign-meta .sep { margin: 0 6px; opacity: 0.4; }
+
+.campaign-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-resume {
+  padding: 6px 16px;
+  font-family: var(--font-serif);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--accent-gold);
+  background: transparent;
+  border: 1px solid var(--accent-gold);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-resume:hover { background: rgba(201, 168, 76, 0.12); }
+
+.btn-delete {
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.btn-delete:hover {
+  color: #c0392b;
+  border-color: rgba(192, 57, 43, 0.27);
+}
+
+.confirm-prompt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: #c0392b;
+  flex-shrink: 0;
+}
+
+.btn-confirm-yes {
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  color: #c0392b;
+  background: transparent;
+  border: 1px solid #c0392b;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-confirm-cancel {
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.empty-state {
+  padding: 28px 32px;
+  text-align: center;
+  font-family: var(--font-serif-body);
+  font-style: italic;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  border: 1px dashed var(--border-color);
+  border-radius: 6px;
+  margin: 0 24px 8px;
+}
+
+.browser-skeleton {
+  padding: 0 24px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.skeleton-row {
+  height: 62px;
+  border-radius: 6px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.browser-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 12px 0;
+}
+
+.new-campaign {
+  padding: 8px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+
+.form-select {
+  flex: 1;
+  padding: 9px 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: var(--accent-gold-dim);
+}
+
+.form-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-start {
+  width: 100%;
+  padding: 11px;
+  font-family: var(--font-serif);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  color: var(--bg-primary);
+  background: var(--accent-gold);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn-start:hover { opacity: 0.88; }
+.btn-start:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
