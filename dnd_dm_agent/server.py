@@ -204,6 +204,8 @@ async def get_character(campaign_instance: str, character_name: str):
 
 @app.get("/api/map/{instance}")
 def get_map(instance: str) -> dict:
+    if "/" in instance or "\\" in instance or ".." in instance:
+        raise HTTPException(status_code=400, detail="Invalid instance name")
     map_file = PROJECT_ROOT / "campaigns" / instance / "map_state.json"
     if not map_file.exists():
         return {"mode": None}

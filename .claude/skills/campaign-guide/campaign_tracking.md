@@ -54,8 +54,6 @@ After each exchange, follow this checklist in order:
 
 ---
 
----
-
 ## Campaign State Files
 
 ```

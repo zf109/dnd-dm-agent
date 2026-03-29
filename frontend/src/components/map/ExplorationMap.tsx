@@ -25,6 +25,16 @@ interface ExplorationMapProps {
 }
 
 export function ExplorationMap({ graph }: ExplorationMapProps) {
+  if (graph.nodes.length === 0) {
+    return (
+      <svg viewBox="0 0 100 40" width="100%" className="exploration-map" preserveAspectRatio="xMidYMid meet">
+        <text x={50} y={24} textAnchor="middle" fill="#4a4438" fontSize={10} fontFamily="Georgia, serif">
+          No locations yet
+        </text>
+      </svg>
+    );
+  }
+
   const laid = layoutNodes(graph.nodes);
   const byId = Object.fromEntries(laid.map((n) => [n.id, n]));
 

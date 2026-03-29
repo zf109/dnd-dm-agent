@@ -27,13 +27,18 @@ export function CombatMap({ grid, terrain, tokens, current_turn, round }: Combat
     : 8);
 
   // Tokens without positions get placed along the top row in order
-  let autoX = 0;
-  const placed = tokenList.map(([name, token]) => {
-    if (token.x !== undefined && token.y !== undefined) {
-      return { name, token, px: token.x, py: token.y };
-    }
-    return { name, token, px: autoX++, py: 0 };
-  });
+  const placed = tokenList.reduce<Array<{ name: string; token: Token; px: number; py: number }>>(
+    (acc, [name, token]) => {
+      if (token.x !== undefined && token.y !== undefined) {
+        acc.push({ name, token, px: token.x, py: token.y });
+      } else {
+        const autoX = acc.filter((p) => p.py === 0).length;
+        acc.push({ name, token, px: autoX, py: 0 });
+      }
+      return acc;
+    },
+    [],
+  );
 
   const W = cols * CELL;
   const H = rows * CELL;
