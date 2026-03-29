@@ -2,16 +2,15 @@
 
 import asyncio
 import json
+import re
 from pathlib import Path
-from typing import Any
 
-from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect, HTTPException
+from claude_agent_sdk import AssistantMessage, ClaudeSDKClient, TextBlock, ToolResultBlock, ToolUseBlock
+from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from claude_agent_sdk import ClaudeSDKClient, AssistantMessage, TextBlock, ToolUseBlock, ToolResultBlock
-
 from .claude_agent import get_options, process_message, run_bookkeeping_subagent
-from .logging_config import logger, dm_logger, bookkeeping_logger
+from .logging_config import bookkeeping_logger, dm_logger, logger
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -24,6 +23,43 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def _parse_instance_meta(instance_dir: Path) -> dict:
+    """Parse campaign_progress.md to extract display metadata for an instance."""
+    progress = instance_dir / "campaign_progress.md"
+    name = instance_dir.name
+    defaults = {"name": name, "display_name": name.replace("_", " ").title(), "character": "", "beat": ""}
+
+    if not progress.exists():
+        return defaults
+
+    text = progress.read_text()
+
+    # display_name: Template + Instance from header lines
+    template_m = re.search(r"\*\*Template:\*\*\s*(\S+)", text)
+    instance_m = re.search(r"\*\*Instance:\*\*\s*(\S+)", text)
+    if template_m and instance_m:
+        t = template_m.group(1).replace("_", " ").title()
+        i = instance_m.group(1).replace("_", " ").title()
+        display_name = f"{t} \u2014 {i}"
+    else:
+        display_name = name.replace("_", " ").title()
+
+    # character: first Party list entry
+    char_m = re.search(r"- \*\*(.+?)\*\*\s*\((.+?)\)", text)
+    character = f"{char_m.group(1)} \u00b7 {char_m.group(2)}" if char_m else ""
+
+    # beat: Act N + Beat text
+    act_m = re.search(r"- \*\*Act:\*\*\s*Act\s*(\d+)", text)
+    beat_m = re.search(r"- \*\*Beat:\*\*\s*(.+?)(?:\s*[\(\-].*)?$", text, re.MULTILINE)
+    if beat_m:
+        beat_text = beat_m.group(1).strip()
+        beat = f"Act {act_m.group(1)} \u00b7 {beat_text}" if act_m else beat_text
+    else:
+        beat = ""
+
+    return {"name": name, "display_name": display_name, "character": character, "beat": beat}
 
 
 # =============================================================================
@@ -41,8 +77,8 @@ async def list_campaigns():
     campaigns_dir = PROJECT_ROOT / "campaigns"
     if not campaigns_dir.exists():
         return {"instances": []}
-    instances = [d.name for d in campaigns_dir.iterdir() if d.is_dir()]
-    return {"instances": sorted(instances)}
+    dirs = sorted(d for d in campaigns_dir.iterdir() if d.is_dir())
+    return {"instances": [_parse_instance_meta(d) for d in dirs]}
 
 
 @app.get("/api/campaigns/{campaign_instance}/characters")
@@ -69,6 +105,7 @@ async def get_character(campaign_instance: str, character_name: str):
 
 def _make_tool_display_name(tool_name: str, tool_input: dict) -> str:
     """Convert tool name + input into a context-aware display string."""
+
     def _stem(path: str) -> str:
         """Extract the filename stem from a path."""
         return path.rstrip("/").split("/")[-1].replace(".md", "").replace("_", " ")
@@ -163,14 +200,16 @@ async def _forward_bookkeeping_to_ws(
             for block in message.content:
                 if isinstance(block, ToolUseBlock):
                     try:
-                        await websocket.send_json({
-                            "type": "tool_use",
-                            "tool_name": block.name,
-                            "tool_input": block.input,
-                            "display_name": _make_tool_display_name(block.name, block.input),
-                            "tooltip": _make_tool_tooltip(block.name, block.input),
-                            "source": "bookkeeping",
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "tool_use",
+                                "tool_name": block.name,
+                                "tool_input": block.input,
+                                "display_name": _make_tool_display_name(block.name, block.input),
+                                "tooltip": _make_tool_tooltip(block.name, block.input),
+                                "source": "bookkeeping",
+                            }
+                        )
                     except Exception:
                         pass  # WebSocket may have closed
     except Exception as e:
@@ -192,11 +231,13 @@ async def websocket_endpoint(
     await websocket.accept()
     logger.info(f"WebSocket connected: session={session_id} campaign={campaign!r} character={character!r}")
 
-    async with ClaudeSDKClient(options=get_options(
-        permission_mode="bypassPermissions",
-        campaign=campaign,
-        character=character,
-    )) as client:
+    async with ClaudeSDKClient(
+        options=get_options(
+            permission_mode="bypassPermissions",
+            campaign=campaign,
+            character=character,
+        )
+    ) as client:
         try:
             async for raw in websocket.iter_text():
                 try:
@@ -227,49 +268,55 @@ async def websocket_endpoint(
                     for block in message.content:
                         if isinstance(block, TextBlock) and block.text:
                             dm_response_parts.append(block.text)
-                            await websocket.send_json({
-                                "type": "text_chunk",
-                                "content": block.text,
-                            })
+                            await websocket.send_json(
+                                {
+                                    "type": "text_chunk",
+                                    "content": block.text,
+                                }
+                            )
 
                         elif isinstance(block, ToolUseBlock):
-                            await websocket.send_json({
-                                "type": "tool_use",
-                                "tool_name": block.name,
-                                "tool_input": block.input,
-                                "display_name": _make_tool_display_name(block.name, block.input),
-                                "tooltip": _make_tool_tooltip(block.name, block.input),
-                                "source": "dm",
-                            })
+                            await websocket.send_json(
+                                {
+                                    "type": "tool_use",
+                                    "tool_name": block.name,
+                                    "tool_input": block.input,
+                                    "display_name": _make_tool_display_name(block.name, block.input),
+                                    "tooltip": _make_tool_tooltip(block.name, block.input),
+                                    "source": "dm",
+                                }
+                            )
 
                         elif isinstance(block, ToolResultBlock):
                             if hasattr(block, "content") and block.content:
                                 result_text = (
-                                    block.content[0].text
-                                    if hasattr(block.content[0], "text")
-                                    else str(block.content)
+                                    block.content[0].text if hasattr(block.content[0], "text") else str(block.content)
                                 )
                                 try:
                                     result_data = json.loads(result_text.replace("'", '"'))
                                 except (json.JSONDecodeError, AttributeError):
                                     result_data = {"raw": result_text}
-                                await websocket.send_json({
-                                    "type": "tool_result",
-                                    "result": result_data,
-                                })
+                                await websocket.send_json(
+                                    {
+                                        "type": "tool_result",
+                                        "result": result_data,
+                                    }
+                                )
 
                 # Unblock the user immediately — bookkeeping runs in background
                 await websocket.send_json({"type": "turn_complete"})
                 logger.info(f"[{session_id}] Turn complete")
 
                 # Bookkeeping subagent: isolated context, delegates to skills
-                asyncio.create_task(_forward_bookkeeping_to_ws(
-                    websocket=websocket,
-                    user_msg=content,
-                    dm_response="\n".join(dm_response_parts),
-                    campaign=campaign,
-                    character=character,
-                ))
+                asyncio.create_task(
+                    _forward_bookkeeping_to_ws(
+                        websocket=websocket,
+                        user_msg=content,
+                        dm_response="\n".join(dm_response_parts),
+                        campaign=campaign,
+                        character=character,
+                    )
+                )
 
         except WebSocketDisconnect:
             logger.info(f"WebSocket disconnected: session={session_id}")
