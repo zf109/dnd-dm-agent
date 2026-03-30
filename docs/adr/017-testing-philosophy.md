@@ -75,8 +75,11 @@ Add a new eval scenario to `tests/integration/test_bookkeeping_evals.py` with a 
 
 This is the trigger: *if bookkeeping can now write a new file or a new field that affects game state, a new eval scenario is required.* The map state update (Step 4 added to the bookkeeping checklist on this branch) is an example of a capability that warrants eval coverage — see the known gap below.
 
-**New skill that does not affect bookkeeping state** (e.g. a DM narration guide):
-No new test required. The skill is narrative guidance; there is no file output to assert.
+**New DM agent knowledge** (new spell, class, monster, or rule in `dnd-knowledge-store` or similar):
+Add a smoke test to `tests/integration/test_claude_agent.py`. Send a prompt that requires the new knowledge and assert the response contains expected keywords. This verifies the agent reads and applies the skill, not just that the skill file exists. See the existing `test_agent_knowledge_skill_classes` and `test_agent_knowledge_skill_spells` for the pattern.
+
+**New DM behaviour guidance** (new rule in `dnd-dm`, `map`, or another narration skill):
+A smoke test is appropriate if the new behaviour is specific enough to assert — e.g. "DM now announces round number at combat start" → send a combat prompt, assert "round" appears in the response. If the change is stylistic or too subtle to assert ("be more terse"), manual play-testing is the honest instrument and should be explicitly accepted as sufficient.
 
 **New frontend component or rendering feature:**
 TypeScript compilation and manual browser verification remain sufficient. No component tests.
