@@ -49,7 +49,7 @@ available_campaigns/{campaign}/maps/{room_id}.json
 Schema:
 ```json
 {
-  "room": "brewery_cellar",
+  "room": "brewery_cellars",
   "label": "The Brewery Cellars",
   "grid": {"width": 15, "height": 10},
   "terrain": [
@@ -67,7 +67,7 @@ Terrain types:
 
 Not every room needs a map file. Rooms without one render tokens on a plain grid (combat mode) or as graph nodes (exploration mode).
 
-Create `maps/brewery_cellar.json` for `a_most_potent_brew` as the reference example. Other rooms can be added incrementally.
+Create `maps/brewery_cellars.json` for `a_most_potent_brew` as the reference example. Other rooms can be added incrementally.
 
 ---
 
@@ -92,7 +92,7 @@ Content sections:
 - Skip map narration for trivial skirmishes (1-2 enemies, open space, over in 1-2 turns) — log entry is enough
 
 **Narration patterns for bookkeeping to extract:**
-- Location: "The party enters the brewery cellars" → bookkeeping sets `room: "brewery_cellar"`
+- Location: "The party enters the brewery cellars" → bookkeeping sets `room: "brewery_cellars"`
 - Movement: "Thork charges north, ending up adjacent to rat_1" → bookkeeping infers position
 - Combat start: "Initiative order: Thork (18), rat_1 (12), rat_2 (9)" → bookkeeping sets initiative
 - HP change: already handled by character-management skill
