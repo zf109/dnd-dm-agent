@@ -21,7 +21,47 @@ After each exchange, follow this checklist in order:
 **Step 3 — Advance campaign progress if story moved**:
 - A beat was completed, a major decision made, or act advanced → update campaign_progress.md
 
----
+**Step 4 — Update map state if location or combat state changed**:
+- Find map state: `campaigns/{instance}/map_state.json`
+- Read `locations.md` to confirm valid room ids before writing
+
+**Exploration (party moved to new area):**
+- Write `mode: "exploration"`, `room: "{room_id}"` (use id from locations.md)
+- Update `graph.party_location` to the new room id
+- Mark node `visited: true` if first visit
+- Build graph nodes/edges from locations.md if not yet initialised
+
+**Combat start:**
+- Write `mode: "combat"`, `room: "{current_room_id}"`
+- Initialise tokens: party HP from character files, enemy HP from encounters.md stat blocks
+- Token type: `"party"` or `"enemy"`
+- Convert DM's narrative positions to integer `x`/`y` grid coordinates. Read the static map file (`available_campaigns/{campaign}/maps/{room}.json`) for grid dimensions; grid origin `(0,0)` is the top-left (northwest) corner. Map narrative descriptions to approximate coordinates — e.g. for a 14×10 grid: "northwest corner" → `x:1,y:1`; "south end" → `x:7,y:9`; "centre" → `x:7,y:5`. **Do NOT write a `position` string field — write `x` and `y` integers only.**
+- Set `initiative` as an ordered array of `{"name": "...", "roll": N}` objects (highest roll first)
+- Set `current_turn` to the **name string** of the combatant whose turn it is (e.g. `"Giant Rat 2"`), not a number
+- Set `round: 1`
+
+Token schema (write exactly these fields):
+```json
+{"name": "Thork", "type": "party", "hp": 12, "max_hp": 12, "ac": 16, "x": 7, "y": 9, "conditions": []}
+```
+
+Initiative schema:
+```json
+[{"name": "Giant Rat 2", "roll": 13}, {"name": "Thork", "roll": 7}]
+```
+
+**Mid-combat (after each significant action):**
+- Update token HP and conditions from DM's narrative
+- Update token `x`/`y` grid coordinates if DM described movement (translate narrative direction/distance to grid steps: 5 ft ≈ 1 cell)
+- Advance `current_turn` and `round` as turns pass
+- Mark dead tokens with `conditions: ["dead"]` — do not remove from file
+
+**Combat end:**
+- Write `mode: "exploration"`, preserve `room` and `graph`
+- Drop `tokens`, `initiative`, `current_turn`, `round` fields
+
+**When to skip:**
+- Purely conversational exchange with no movement, combat, or scene change
 
 ---
 

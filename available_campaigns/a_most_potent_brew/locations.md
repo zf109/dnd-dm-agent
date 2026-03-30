@@ -2,6 +2,8 @@
 
 ## Wizard's Tower Brewing Co.
 
+**Room ID:** `wizards_tower_brewing`
+
 **Description**: Successful craft brewery known for hoppy summer ales
 
 **Visual Details**: A converted stone building with cheerful painted signs advertising seasonal brews. Copper kettles gleam behind glass windows, and the wooden sign creaks gently in the breeze. Warm golden light spills from diamond-paned windows.
@@ -18,6 +20,8 @@
 ---
 
 ## The Brewery Cellars
+
+**Room ID:** `brewery_cellars`
 
 **Description**: Stone cellars with beer barrels, recently expanded
 
@@ -36,6 +40,8 @@
 ---
 
 ## Ancient Wizard Tower Ruins (Underground)
+
+**Room ID:** `ancient_wizard_tower_ruins`
 
 **Description**: 4-5 room dungeon with laboratory, living quarters, and storage areas
 

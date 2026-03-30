@@ -1,0 +1,11 @@
+{
+  "room": "brewery_cellars",
+  "label": "The Brewery Cellars",
+  "grid": {"width": 14, "height": 10},
+  "terrain": [
+    {"type": "wall", "x1": 9, "y1": 0, "x2": 9, "y2": 7},
+    {"type": "obstacle", "label": "barrel", "x": 3, "y": 4},
+    {"type": "obstacle", "label": "barrel", "x": 2, "y": 6},
+    {"type": "obstacle", "label": "hole in wall", "x": 12, "y": 7}
+  ]
+}

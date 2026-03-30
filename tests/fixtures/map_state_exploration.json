@@ -1,0 +1,15 @@
+{
+  "mode": "exploration",
+  "room": "brewery_cellars",
+  "graph": {
+    "party_location": "brewery_cellars",
+    "nodes": [
+      {"id": "wizards_tower_brewing", "name": "Wizard's Tower Brewing Co.", "visited": true},
+      {"id": "brewery_cellars", "name": "The Brewery Cellars", "visited": true},
+      {"id": "ancient_wizard_tower_ruins", "name": "Ancient Wizard Tower Ruins", "visited": false}
+    ],
+    "edges": [
+      {"from": "wizards_tower_brewing", "to": "brewery_cellars", "direction": "down"}
+    ]
+  }
+}

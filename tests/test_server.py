@@ -1,5 +1,7 @@
 """Tests for campaign REST endpoints."""
 
+import json as json_lib
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -150,3 +152,84 @@ def test_delete_campaign_not_found(deletable_instance):
 def test_delete_campaign_path_traversal(deletable_instance):
     resp = client.delete("/api/campaigns/..%2Fsomething")
     assert resp.status_code in (400, 404)
+
+
+@pytest.fixture
+def map_env(tmp_path, monkeypatch):
+    """Instance with campaign_progress.md containing a Template field."""
+    import dnd_dm_agent.server as srv
+
+    monkeypatch.setattr(srv, "PROJECT_ROOT", tmp_path)
+    inst = tmp_path / "campaigns" / "a_most_potent_brew_thork_adventure"
+    inst.mkdir(parents=True)
+    (inst / "campaign_progress.md").write_text("**Template:** a_most_potent_brew\n**Instance:** thork_adventure\n")
+    return tmp_path
+
+
+def test_get_map_no_map_state(map_env):
+    resp = client.get("/api/map/a_most_potent_brew_thork_adventure")
+    assert resp.status_code == 200
+    assert resp.json() == {"mode": None}
+
+
+def test_get_map_dynamic_only_when_no_static(map_env):
+    inst = map_env / "campaigns" / "a_most_potent_brew_thork_adventure"
+    map_state = {
+        "mode": "exploration",
+        "room": "brewery_cellars",
+        "graph": {"nodes": [], "edges": [], "party_location": "brewery_cellars"},
+    }
+    (inst / "map_state.json").write_text(json_lib.dumps(map_state))
+
+    resp = client.get("/api/map/a_most_potent_brew_thork_adventure")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["mode"] == "exploration"
+    assert "terrain" not in data
+    assert "grid" not in data
+
+
+def test_get_map_merges_static_terrain(map_env):
+    inst = map_env / "campaigns" / "a_most_potent_brew_thork_adventure"
+    map_state = {
+        "mode": "combat",
+        "room": "brewery_cellars",
+        "tokens": {"thork": {"x": 3, "y": 2, "hp": 7, "max_hp": 12, "conditions": [], "type": "party"}},
+    }
+    (inst / "map_state.json").write_text(json_lib.dumps(map_state))
+
+    maps_dir = map_env / "available_campaigns" / "a_most_potent_brew" / "maps"
+    maps_dir.mkdir(parents=True)
+    static = {
+        "room": "brewery_cellars",
+        "label": "The Brewery Cellars",
+        "grid": {"width": 14, "height": 10},
+        "terrain": [{"type": "wall", "x1": 9, "y1": 0, "x2": 9, "y2": 7}],
+    }
+    (maps_dir / "brewery_cellars.json").write_text(json_lib.dumps(static))
+
+    resp = client.get("/api/map/a_most_potent_brew_thork_adventure")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["mode"] == "combat"
+    assert data["grid"] == {"width": 14, "height": 10}
+    assert data["label"] == "The Brewery Cellars"
+    assert len(data["terrain"]) == 1
+    assert data["terrain"][0]["type"] == "wall"
+    assert "thork" in data["tokens"]
+
+
+def test_get_map_dynamic_wins_on_conflict(map_env):
+    """Dynamic fields override static fields on key collision."""
+    inst = map_env / "campaigns" / "a_most_potent_brew_thork_adventure"
+    (inst / "map_state.json").write_text(json_lib.dumps({"mode": "combat", "room": "brewery_cellars"}))
+
+    maps_dir = map_env / "available_campaigns" / "a_most_potent_brew" / "maps"
+    maps_dir.mkdir(parents=True)
+    (maps_dir / "brewery_cellars.json").write_text(
+        json_lib.dumps({"room": "brewery_cellars", "mode": "exploration", "grid": {"width": 14, "height": 10}})
+    )
+
+    data = client.get("/api/map/a_most_potent_brew_thork_adventure").json()
+    assert data["mode"] == "combat"  # dynamic wins
+    assert data["grid"]["width"] == 14  # static preserved

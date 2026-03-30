@@ -1,0 +1,26 @@
+{
+  "mode": "combat",
+  "room": "brewery_cellars",
+  "tokens": [
+    {"name": "Thork", "type": "party", "hp": 10, "max_hp": 12, "ac": 18, "x": 7, "y": 9, "conditions": []},
+    {"name": "Giant Rat 1", "type": "enemy", "hp": 7, "max_hp": 7, "ac": 12, "x": 2, "y": 2, "conditions": []},
+    {"name": "Giant Rat 2", "type": "enemy", "hp": 7, "max_hp": 7, "ac": 12, "x": 7, "y": 8, "conditions": []}
+  ],
+  "initiative": [
+    {"name": "Thork", "roll": 15},
+    {"name": "Giant Rat 1", "roll": 10},
+    {"name": "Giant Rat 2", "roll": 6}
+  ],
+  "current_turn": "Thork",
+  "round": 1,
+  "graph": {
+    "party_location": "brewery_cellars",
+    "nodes": [
+      {"id": "wizards_tower_brewing", "name": "Wizard's Tower Brewing Co.", "visited": true},
+      {"id": "brewery_cellars", "name": "The Brewery Cellars", "visited": true}
+    ],
+    "edges": [
+      {"from": "wizards_tower_brewing", "to": "brewery_cellars", "direction": "down"}
+    ]
+  }
+}

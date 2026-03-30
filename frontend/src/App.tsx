@@ -5,7 +5,7 @@ import { useWebSocket } from './hooks/useWebSocket';
 import type { WSStatus } from './hooks/useWebSocket';
 import { parseCharacterMarkdown } from './services/characterParser';
 import { AppHeader } from './components/layout/AppHeader';
-import { MapPlaceholder } from './components/map/MapPlaceholder';
+import { MapPanel } from './components/map/MapPanel';
 import { ChatLog } from './components/chat/ChatLog';
 import { InputBar } from './components/input/InputBar';
 import { ResizablePanels } from './components/layout/ResizablePanels';
@@ -316,7 +316,7 @@ function GameView({ session, onLeave }: { session: SessionConfig; onLeave: () =>
 
         <div className="main-area">
           <ResizablePanels
-            top={<MapPlaceholder />}
+            top={<MapPanel instance={session.campaign} />}
             bottom={<ChatLog entries={state.chatEntries} isTyping={state.isAgentTyping} />}
           />
         </div>

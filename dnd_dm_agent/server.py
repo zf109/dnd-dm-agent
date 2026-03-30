@@ -81,6 +81,26 @@ def _parse_instance_meta(instance_dir: Path) -> dict:
     }
 
 
+def _get_campaign_for_instance(instance_name: str) -> str | None:
+    """Read the Template field from campaign_progress.md to find the campaign directory."""
+    progress = PROJECT_ROOT / "campaigns" / instance_name / "campaign_progress.md"
+    if not progress.exists():
+        return None
+    m = re.search(r"\*\*Template:\*\*\s*(\S+)", progress.read_text())
+    return m.group(1) if m else None
+
+
+def _load_static_map(campaign: str, room: str) -> dict:
+    """Load static terrain from available_campaigns/{campaign}/maps/{room}.json."""
+    path = PROJECT_ROOT / "available_campaigns" / campaign / "maps" / f"{room}.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError:
+        return {}
+
+
 # =============================================================================
 # REST Endpoints
 # =============================================================================
@@ -180,6 +200,29 @@ async def get_character(campaign_instance: str, character_name: str):
     if not path.exists():
         raise HTTPException(status_code=404, detail=f"Character {character_name} not found")
     return {"markdown": path.read_text(), "name": character_name}
+
+
+@app.get("/api/map/{instance}")
+def get_map(instance: str) -> dict:
+    if "/" in instance or "\\" in instance or ".." in instance:
+        raise HTTPException(status_code=400, detail="Invalid instance name")
+    map_file = PROJECT_ROOT / "campaigns" / instance / "map_state.json"
+    if not map_file.exists():
+        return {"mode": None}
+    try:
+        map_state = json.loads(map_file.read_text())
+    except json.JSONDecodeError:
+        return {"mode": None}
+
+    room = map_state.get("room")
+    if room:
+        campaign = _get_campaign_for_instance(instance)
+        if campaign:
+            static = _load_static_map(campaign, room)
+            if static:
+                return {**static, **map_state}
+
+    return map_state
 
 
 # =============================================================================
