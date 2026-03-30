@@ -60,14 +60,51 @@ TypeScript compilation catches type errors. Manual browser verification catches 
 
 Do not add React component tests (enzyme, testing-library) unless a specific, non-visual correctness property needs asserting (e.g. a calculation function extracted into a utility).
 
+### Principle 6: Evolving the test suite with new features
+
+Each type of new feature has a corresponding test obligation:
+
+**New server endpoint or tool function:**
+Add unit tests to `tests/`. Cover the happy path and key error paths (missing file, bad input, path traversal). Write the tests before the implementation.
+
+**New bookkeeping capability** (new field written to a state file, new step in the checklist):
+Add a new eval scenario to `tests/integration/test_bookkeeping_evals.py` with a corresponding fixture in `tests/fixtures/`. The scenario must:
+1. Start from a known fixture state
+2. Provide a synthetic DM exchange that triggers the new behaviour
+3. Assert the exact value written to the file
+
+This is the trigger: *if bookkeeping can now write a new file or a new field that affects game state, a new eval scenario is required.* The map state update (Step 4 added to the bookkeeping checklist on this branch) is an example of a capability that warrants eval coverage — see the known gap below.
+
+**New skill that does not affect bookkeeping state** (e.g. a DM narration guide):
+No new test required. The skill is narrative guidance; there is no file output to assert.
+
+**New frontend component or rendering feature:**
+TypeScript compilation and manual browser verification remain sufficient. No component tests.
+
+**Feature spanning both layers** (e.g. new server endpoint + bookkeeping writes to a new file):
+Both obligations apply: unit tests for the endpoint, eval scenario for the bookkeeping output.
+
+### Known gap: map state eval scenarios
+
+The map state update (Step 4 of the bookkeeping checklist, added on the `map-panel` branch) has no eval coverage. The capability is exercised in manual play testing but not in the automated eval suite. Future work should add at minimum:
+
+| Scenario | Starting fixture | Synthetic exchange | Assertion |
+|----------|-----------------|-------------------|-----------|
+| Combat start | Party in exploration mode | DM describes entering combat, initiative rolled | `map_state.json` has `mode: "combat"`, tokens with `x`/`y` coords, correct `initiative` and `current_turn` |
+| HP update in combat | Active combat with known token HP | DM describes a hit and damage roll | Target token HP decremented correctly |
+| Combat end | Active combat, all enemies dead | DM narrates last enemy falls | `map_state.json` switches to `mode: "exploration"`, tokens/initiative/round dropped |
+
+These should be added when capacity allows, before the next change to the map state bookkeeping instructions.
+
 ### What level of testing is sufficient
 
 A change is ready to merge when:
 
 1. **New deterministic code** has unit tests covering its contract (happy path + key error paths). The test was written before the implementation.
-2. **Changes to `campaign-guide` skill or bookkeeping pipeline** have passed the eval gate — all 4 scenarios in `tests/integration/test_bookkeeping_evals.py` pass (ADR-010).
-3. **TypeScript compiles clean** (`tsc --noEmit`).
-4. **All existing tests pass** (`uv run pytest tests/ --ignore=tests/integration`).
+2. **New bookkeeping capability** has a new eval scenario covering its output (see Principle 6).
+3. **Changes to `campaign-guide` skill or bookkeeping pipeline** have passed the eval gate — all existing scenarios in `tests/integration/test_bookkeeping_evals.py` pass (ADR-010).
+4. **TypeScript compiles clean** (`tsc --noEmit`).
+5. **All existing tests pass** (`uv run pytest tests/ --ignore=tests/integration`).
 
 Nothing else is required. In particular:
 - No coverage percentage target
