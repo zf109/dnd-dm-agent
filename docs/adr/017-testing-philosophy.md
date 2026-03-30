@@ -84,18 +84,6 @@ TypeScript compilation and manual browser verification remain sufficient. No com
 **Feature spanning both layers** (e.g. new server endpoint + bookkeeping writes to a new file):
 Both obligations apply: unit tests for the endpoint, eval scenario for the bookkeeping output.
 
-### Known gap: map state eval scenarios
-
-The map state update (Step 4 of the bookkeeping checklist, added on the `map-panel` branch) has no eval coverage. The capability is exercised in manual play testing but not in the automated eval suite. Future work should add at minimum:
-
-| Scenario | Starting fixture | Synthetic exchange | Assertion |
-|----------|-----------------|-------------------|-----------|
-| Combat start | Party in exploration mode | DM describes entering combat, initiative rolled | `map_state.json` has `mode: "combat"`, tokens with `x`/`y` coords, correct `initiative` and `current_turn` |
-| HP update in combat | Active combat with known token HP | DM describes a hit and damage roll | Target token HP decremented correctly |
-| Combat end | Active combat, all enemies dead | DM narrates last enemy falls | `map_state.json` switches to `mode: "exploration"`, tokens/initiative/round dropped |
-
-These should be added when capacity allows, before the next change to the map state bookkeeping instructions.
-
 ### What level of testing is sufficient
 
 A change is ready to merge when:
