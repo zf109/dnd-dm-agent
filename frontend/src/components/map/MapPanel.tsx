@@ -23,10 +23,12 @@ export interface MapGraph {
 }
 
 export interface Token {
+  name: string;
   x?: number;
   y?: number;
   hp: number;
   max_hp: number;
+  ac?: number;
   conditions: string[];
   type: 'party' | 'enemy';
 }
@@ -42,16 +44,52 @@ export interface TerrainFeature {
   y2?: number;
 }
 
+// Raw shape as returned by the server (before normalisation)
+interface RawMapState {
+  mode: 'exploration' | 'combat' | null;
+  room?: string;
+  graph?: MapGraph;
+  grid?: { width: number; height: number };
+  terrain?: TerrainFeature[];
+  // bookkeeping writes an array; older format may be Record
+  tokens?: Token[] | Record<string, Token>;
+  // bookkeeping writes [{name, roll}]; older format may be string[]
+  initiative?: Array<{ name: string; roll: number }> | string[];
+  // bookkeeping writes numeric index into initiative; resolved to name below
+  current_turn?: string | number;
+  round?: number;
+}
+
 export interface MapState {
   mode: 'exploration' | 'combat' | null;
   room?: string;
   graph?: MapGraph;
   grid?: { width: number; height: number };
   terrain?: TerrainFeature[];
-  tokens?: Record<string, Token>;
-  initiative?: string[];
+  tokens: Record<string, Token>;
   current_turn?: string;
   round?: number;
+}
+
+function normalise(raw: RawMapState): MapState {
+  // Normalise tokens: array → Record keyed by name
+  let tokens: Record<string, Token>;
+  if (Array.isArray(raw.tokens)) {
+    tokens = Object.fromEntries(raw.tokens.map((t) => [t.name, t]));
+  } else {
+    tokens = (raw.tokens ?? {}) as Record<string, Token>;
+  }
+
+  // Normalise current_turn: numeric index → name string
+  let current_turn: string | undefined;
+  if (typeof raw.current_turn === 'number' && Array.isArray(raw.initiative)) {
+    const entry = raw.initiative[raw.current_turn];
+    current_turn = entry ? (typeof entry === 'string' ? entry : entry.name) : undefined;
+  } else {
+    current_turn = raw.current_turn as string | undefined;
+  }
+
+  return { ...raw, tokens, current_turn };
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -70,7 +108,7 @@ export function MapPanel({ instance }: MapPanelProps) {
       try {
         const res = await fetch(`/api/map/${instance}`);
         if (res.ok && !cancelled) {
-          setMapData(await res.json() as MapState);
+          setMapData(normalise(await res.json() as RawMapState));
         }
       } catch { /* network error — silently ignore */ }
     };

@@ -35,13 +35,24 @@ After each exchange, follow this checklist in order:
 - Write `mode: "combat"`, `room: "{current_room_id}"`
 - Initialise tokens: party HP from character files, enemy HP from encounters.md stat blocks
 - Token type: `"party"` or `"enemy"`
-- Infer starting positions from DM's narrative (relative placement, not coordinates)
-- Set `initiative` order and `current_turn` from DM's narration
+- Convert DM's narrative positions to integer `x`/`y` grid coordinates. Read the static map file (`available_campaigns/{campaign}/maps/{room}.json`) for grid dimensions; grid origin `(0,0)` is the top-left (northwest) corner. Map narrative descriptions to approximate coordinates — e.g. for a 14×10 grid: "northwest corner" → `x:1,y:1`; "south end" → `x:7,y:9`; "centre" → `x:7,y:5`. **Do NOT write a `position` string field — write `x` and `y` integers only.**
+- Set `initiative` as an ordered array of `{"name": "...", "roll": N}` objects (highest roll first)
+- Set `current_turn` to the **name string** of the combatant whose turn it is (e.g. `"Giant Rat 2"`), not a number
 - Set `round: 1`
+
+Token schema (write exactly these fields):
+```json
+{"name": "Thork", "type": "party", "hp": 12, "max_hp": 12, "ac": 16, "x": 7, "y": 9, "conditions": []}
+```
+
+Initiative schema:
+```json
+[{"name": "Giant Rat 2", "roll": 13}, {"name": "Thork", "roll": 7}]
+```
 
 **Mid-combat (after each significant action):**
 - Update token HP and conditions from DM's narrative
-- Update token position if DM described movement
+- Update token `x`/`y` grid coordinates if DM described movement (translate narrative direction/distance to grid steps: 5 ft ≈ 1 cell)
 - Advance `current_turn` and `round` as turns pass
 - Mark dead tokens with `conditions: ["dead"]` — do not remove from file
 
