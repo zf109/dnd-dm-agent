@@ -20,12 +20,12 @@ from claude_agent_sdk import (
 
 from .logging_config import bookkeeping_logger, dm_logger, logger
 
-# Project root directory (for skills and file operations)
-PROJECT_ROOT = str(Path(__file__).parent.parent.resolve())
-
 # Import domain logic from existing tools
 from .tools.campaign_instance_tools import create_campaign_instance as _create_campaign_instance
 from .tools.utility_tools import roll_dice as _roll_dice
+
+# Project root directory (for skills and file operations)
+PROJECT_ROOT = str(Path(__file__).parent.parent.resolve())
 
 # =============================================================================
 # Custom Tools
@@ -44,7 +44,7 @@ async def roll_dice(args: dict[str, Any]) -> dict[str, Any]:
 @tool(
     "create_campaign_instance",
     "Create a new campaign instance from a template",
-    {"campaign_template": str, "instance_name": str}
+    {"campaign_template": str, "instance_name": str},
 )
 async def create_campaign_instance(args: dict[str, Any]) -> dict[str, Any]:
     campaign = args["campaign_template"]
@@ -114,31 +114,27 @@ def get_options(permission_mode: str = "acceptEdits", campaign: str = "", charac
         # ============================================
         # REQUIRED FOR SKILLS
         # ============================================
-        cwd=PROJECT_ROOT,                          # Project root for skills discovery
-        setting_sources=["user", "project"],       # Load skills + CLAUDE.md
-
+        cwd=PROJECT_ROOT,  # Project root for skills discovery
+        setting_sources=["user", "project"],  # Load skills + CLAUDE.md
         # ============================================
         # TOOLS CONFIGURATION
         # ============================================
         allowed_tools=[
             # Built-in tools (for skills)
-            "Skill",                               # Enable skills
-            "Read",                                # Read files
-            "Write",                               # Create files (for characters)
-            "Edit",                                # Update files (for characters)
-            "Grep",                                # Search content
-            "Glob",                                # Find files
-
+            "Skill",  # Enable skills
+            "Read",  # Read files
+            "Write",  # Create files (for characters)
+            "Edit",  # Update files (for characters)
+            "Grep",  # Search content
+            "Glob",  # Find files
             # Custom MCP tools
             "mcp__dnd__roll_dice",
             "mcp__dnd__create_campaign_instance",
         ],
-
         # ============================================
         # MCP SERVER
         # ============================================
         mcp_servers={"dnd": dnd_tools},
-
         # ============================================
         # OTHER SETTINGS
         # ============================================

@@ -1,12 +1,13 @@
 """Tests for campaign instance tools."""
 
-import pytest
-from pathlib import Path
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
-from dnd_dm_agent.tools.campaign_instance_tools import create_campaign_instance, PROJECT_ROOT
+import pytest
+
+from dnd_dm_agent.tools.campaign_instance_tools import create_campaign_instance
 
 
 @pytest.fixture

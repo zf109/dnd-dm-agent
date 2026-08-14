@@ -5,6 +5,7 @@ These tests require ANTHROPIC_API_KEY to be set and will make actual API calls.
 
 import pytest
 
+
 @pytest.mark.asyncio
 async def test_agent_dice_roll():
     """Test agent can roll dice using the roll_dice tool."""
@@ -18,8 +19,9 @@ async def test_agent_dice_roll():
 
     # The response should mention rolling or dice results
     result_lower = result.lower()
-    assert any(keyword in result_lower for keyword in ["roll", "dice", "total", "result"]), \
+    assert any(keyword in result_lower for keyword in ["roll", "dice", "total", "result"]), (
         f"Expected dice-related response, got: {result}"
+    )
 
 
 @pytest.mark.asyncio
@@ -35,8 +37,9 @@ async def test_agent_knowledge_skill_classes():
 
     # The response should mention Fighter-related abilities
     result_lower = result.lower()
-    assert any(keyword in result_lower for keyword in ["fighter", "fighting style", "second wind", "armor", "weapon"]), \
-        f"Expected Fighter-related information, got: {result}"
+    assert any(
+        keyword in result_lower for keyword in ["fighter", "fighting style", "second wind", "armor", "weapon"]
+    ), f"Expected Fighter-related information, got: {result}"
 
 
 @pytest.mark.asyncio
@@ -52,8 +55,9 @@ async def test_agent_knowledge_skill_spells():
 
     # The response should mention spell-related information
     result_lower = result.lower()
-    assert any(keyword in result_lower for keyword in ["magic missile", "spell", "damage", "1st level", "force"]), \
+    assert any(keyword in result_lower for keyword in ["magic missile", "spell", "damage", "1st level", "force"]), (
         f"Expected Magic Missile spell information, got: {result}"
+    )
 
 
 @pytest.mark.asyncio
@@ -88,10 +92,11 @@ async def test_agent_knowledge_skill_class_comparison():
 @pytest.mark.asyncio
 async def test_character_management_create_and_update_wizard():
     """Test agent can create and update a spellcaster using character-management skill."""
-    from dnd_dm_agent.claude_agent import run
     import os
-    import shutil
     import re
+    import shutil
+
+    from dnd_dm_agent.claude_agent import run
 
     # Clean up any existing test campaign instance
     test_campaign_path = "campaigns/test_campaign"
@@ -99,7 +104,9 @@ async def test_character_management_create_and_update_wizard():
         shutil.rmtree(test_campaign_path)
 
     # ===== PART 1: CREATE CHARACTER =====
-    result = await run("Create a test campaign instance called 'test_campaign', then create a level 1 human wizard named Merlin")
+    result = await run(
+        "Create a test campaign instance called 'test_campaign', then create a level 1 human wizard named Merlin"
+    )
 
     # Check that we got a response
     assert result, "Expected non-empty response from agent"
@@ -108,8 +115,9 @@ async def test_character_management_create_and_update_wizard():
     # Response should mention character creation
     result_lower = result.lower()
     assert "merlin" in result_lower, f"Expected mention of character name, got: {result}"
-    assert any(keyword in result_lower for keyword in ["created", "character", "wizard"]), \
+    assert any(keyword in result_lower for keyword in ["created", "character", "wizard"]), (
         f"Expected character creation confirmation, got: {result}"
+    )
 
     # Check that campaign instance was created
     assert os.path.exists(test_campaign_path), f"Expected campaign directory at {test_campaign_path}"
@@ -120,7 +128,7 @@ async def test_character_management_create_and_update_wizard():
     assert os.path.exists(character_file), f"Expected character file at {character_file}"
 
     # Read and validate initial character file content
-    with open(character_file, 'r') as f:
+    with open(character_file, "r") as f:
         initial_content = f.read()
         content_lower = initial_content.lower()
 
@@ -140,14 +148,14 @@ async def test_character_management_create_and_update_wizard():
         # Wizard features
         wizard_features = ["spellbook", "arcane recovery", "spell save dc"]
         has_wizard_feature = any(feature in content_lower for feature in wizard_features)
-        assert has_wizard_feature, f"Expected wizard class features in character file"
+        assert has_wizard_feature, "Expected wizard class features in character file"
 
         # Combat stats
         assert "hit points" in content_lower or "hp" in content_lower, "Expected HP section"
         assert "armor class" in content_lower or "ac" in content_lower, "Expected AC section"
 
         # Extract initial HP for comparison after update
-        hp_match = re.search(r'(\d+)\s*/\s*(\d+)', initial_content)
+        hp_match = re.search(r"(\d+)\s*/\s*(\d+)", initial_content)
         assert hp_match, "Expected to find HP in format 'current / max'"
         initial_current_hp = int(hp_match.group(1))
         initial_max_hp = int(hp_match.group(2))
@@ -159,27 +167,30 @@ async def test_character_management_create_and_update_wizard():
     # Check update response
     assert update_result, "Expected non-empty response from update"
     update_lower = update_result.lower()
-    assert any(keyword in update_lower for keyword in ["damage", "hp", "hit points", "health", str(damage_amount)]), \
+    assert any(keyword in update_lower for keyword in ["damage", "hp", "hit points", "health", str(damage_amount)]), (
         f"Expected damage-related response, got: {update_result}"
+    )
 
     # Read updated character file
-    with open(character_file, 'r') as f:
+    with open(character_file, "r") as f:
         updated_content = f.read()
 
         # Extract updated HP
-        updated_hp_match = re.search(r'(\d+)\s*/\s*(\d+)', updated_content)
+        updated_hp_match = re.search(r"(\d+)\s*/\s*(\d+)", updated_content)
         assert updated_hp_match, "Expected to find HP after update"
         updated_current_hp = int(updated_hp_match.group(1))
         updated_max_hp = int(updated_hp_match.group(2))
 
         # Verify HP was reduced by damage amount
         expected_hp = max(0, initial_current_hp - damage_amount)
-        assert updated_current_hp == expected_hp, \
+        assert updated_current_hp == expected_hp, (
             f"Expected HP to be {expected_hp} after {damage_amount} damage, but got {updated_current_hp}"
+        )
 
         # Max HP should remain unchanged
-        assert updated_max_hp == initial_max_hp, \
+        assert updated_max_hp == initial_max_hp, (
             f"Max HP should not change, expected {initial_max_hp}, got {updated_max_hp}"
+        )
 
     # ===== PART 3: ANOTHER UPDATE (CAST SPELL - USE SPELL SLOT) =====
     spell_result = await run("Merlin casts Magic Missile (1st level spell)")
@@ -187,11 +198,12 @@ async def test_character_management_create_and_update_wizard():
     # Check spell response
     assert spell_result, "Expected non-empty response from spell casting"
     spell_lower = spell_result.lower()
-    assert any(keyword in spell_lower for keyword in ["magic missile", "spell", "cast"]), \
+    assert any(keyword in spell_lower for keyword in ["magic missile", "spell", "cast"]), (
         f"Expected spell-related response, got: {spell_result}"
+    )
 
     # Read character file after spell casting
-    with open(character_file, 'r') as f:
+    with open(character_file, "r") as f:
         spell_content = f.read()
         spell_lower = spell_content.lower()
 

@@ -51,7 +51,7 @@ export function ExplorationMap({ graph }: ExplorationMapProps) {
       width="100%"
     >
       {/* edges */}
-      {graph.edges.map((e, i) => {
+      {graph.edges.map((e) => {
         const from = byId[e.from];
         const to = byId[e.to];
         if (!from || !to) return null;
