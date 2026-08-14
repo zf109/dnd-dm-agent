@@ -198,7 +198,7 @@ export default function App() {
 }
 
 function GameView({ session, onLeave }: { session: SessionConfig; onLeave: () => void }) {
-  const [state, dispatch] = useReducer(reducer, null, () => ({
+  const [state, dispatch] = useReducer(reducer, null, (): AppState => ({
     chatEntries: loadChatEntries(),
     isAgentTyping: false,
     currentDMEntryId: null,

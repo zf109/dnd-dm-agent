@@ -72,6 +72,7 @@ CAMPAIGNS = PROJECT_ROOT / "campaigns"
 def instance_dir(tmp_path, monkeypatch):
     """Patch PROJECT_ROOT so endpoints use a temp campaigns dir."""
     import dnd_dm_agent.server as srv
+
     monkeypatch.setattr(srv, "PROJECT_ROOT", tmp_path)
     inst = tmp_path / "campaigns" / "a_most_potent_brew_thork_adventure"
     (inst / "characters").mkdir(parents=True)
@@ -104,6 +105,7 @@ def test_list_campaigns_enriched(instance_dir):
 
 def test_list_campaigns_empty(tmp_path, monkeypatch):
     import dnd_dm_agent.server as srv
+
     monkeypatch.setattr(srv, "PROJECT_ROOT", tmp_path)
     resp = client.get("/api/campaigns")
     assert resp.status_code == 200
@@ -227,6 +229,7 @@ Append to `tests/test_server.py`:
 @pytest.fixture
 def templates_dir(tmp_path, monkeypatch):
     import dnd_dm_agent.server as srv
+
     monkeypatch.setattr(srv, "PROJECT_ROOT", tmp_path)
     pregen = tmp_path / "available_campaigns" / "a_most_potent_brew" / "pregenerated_characters"
     pregen.mkdir(parents=True)
@@ -250,6 +253,7 @@ def test_list_templates(templates_dir):
 
 def test_list_templates_empty(tmp_path, monkeypatch):
     import dnd_dm_agent.server as srv
+
     monkeypatch.setattr(srv, "PROJECT_ROOT", tmp_path)
     resp = client.get("/api/templates")
     assert resp.status_code == 200
@@ -282,14 +286,15 @@ async def list_templates():
         characters = []
         if pregen.exists():
             characters = sorted(
-                {"name": f.stem, "display_name": f.stem.replace("_", " ").title()}
-                for f in pregen.glob("*.md")
+                {"name": f.stem, "display_name": f.stem.replace("_", " ").title()} for f in pregen.glob("*.md")
             )
-        result.append({
-            "name": d.name,
-            "display_name": d.name.replace("_", " ").title(),
-            "characters": characters,
-        })
+        result.append(
+            {
+                "name": d.name,
+                "display_name": d.name.replace("_", " ").title(),
+                "characters": characters,
+            }
+        )
     return {"templates": result}
 ```
 
@@ -342,9 +347,11 @@ Append to `tests/test_server.py`:
 def create_env(tmp_path, monkeypatch):
     """Temp dir with one template and one pregenerated character."""
     import dnd_dm_agent.server as srv
+
     monkeypatch.setattr(srv, "PROJECT_ROOT", tmp_path)
     # Also patch campaign_instance_tools PROJECT_ROOT via server's imported create_campaign_instance
     import dnd_dm_agent.tools.campaign_instance_tools as cit
+
     monkeypatch.setattr(cit, "PROJECT_ROOT", tmp_path)
     monkeypatch.setattr(cit, "CAMPAIGNS_DIR", tmp_path / "campaigns")
     pregen = tmp_path / "available_campaigns" / "a_most_potent_brew" / "pregenerated_characters"
@@ -390,6 +397,7 @@ Add after imports:
 
 ```python
 from pydantic import BaseModel
+
 
 class CreateCampaignRequest(BaseModel):
     template: str
@@ -460,6 +468,7 @@ Append to `tests/test_server.py`:
 @pytest.fixture
 def deletable_instance(tmp_path, monkeypatch):
     import dnd_dm_agent.server as srv
+
     monkeypatch.setattr(srv, "PROJECT_ROOT", tmp_path)
     inst = tmp_path / "campaigns" / "a_most_potent_brew_thork_adventure"
     (inst / "characters").mkdir(parents=True)

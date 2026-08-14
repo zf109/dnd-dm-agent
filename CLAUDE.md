@@ -62,7 +62,7 @@ uv run ruff format .
 
 ## Architecture Decisions
 
-Key decisions are documented in `docs/adr/`. Read these before changing core patterns:
+Key decisions are documented in `docs/adr/`. See [`docs/README.md`](docs/README.md) for the full index. Read these before changing core patterns:
 
 - [ADR-001](docs/adr/001-minimal-mcp-tools.md) — Only 2 custom MCP tools; everything else via skills + built-in tools
 - [ADR-002](docs/adr/002-markdown-state-persistence.md) — Game state persisted as `.md` files, not a database
@@ -101,7 +101,17 @@ Trunk-based: branch directly off `master`, keep branches short-lived (days not w
 uv run pytest tests/integration/test_bookkeeping_evals.py -v
 ```
 
-See [ADR-010](docs/adr/agent-harness/010-eval-regression-gate.md) for rationale.
+See [ADR-010](docs/adr/agent-harness/010-eval-regression-gate.md) for rationale. This gate is separate from CI (below) — it runs LLM calls against real fixtures and is not automated, by design.
+
+## Harness Engineering
+
+The dominant failure mode here is agent correctness (an LLM turn produces the wrong game state), not deterministic code bugs — see [ADR-017](docs/adr/017-testing-philosophy.md) for the full reasoning. Each failure mode gets a different instrument, and each instrument is enforced in a different place:
+
+- **`.github/workflows/ci.yml`** — runs on every PR, no API key required: `ruff check`/`ruff format --check`/unit tests (`tests/`, excluding `tests/integration/`) for the backend, and `eslint`/`tsc -b`/`vite build` for the frontend. Catches deterministic regressions and type errors, including pushes that don't go through a Claude Code session.
+- **ADR-compliance PostToolUse hook** (`.claude/settings.json`) — fires on every Write/Edit under `dnd_dm_agent/` or `.claude/skills/`, reads all ADRs, and surfaces required follow-ups (e.g. the eval gate above) as a `systemMessage`. This only fires inside a Claude Code session.
+- **`tests/integration/test_bookkeeping_evals.py`** — the eval suite itself (see Eval Regression Gate above). Manual/hook-triggered, not in CI.
+
+If a check was missed, prefer adding it to CI or extending an ADR-enforced hook over just fixing the one instance — but don't add cost (LLM calls, new infra) without first updating ADR-010's scope reasoning.
 
 ## Code Style
 

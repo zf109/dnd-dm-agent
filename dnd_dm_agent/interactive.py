@@ -1,10 +1,11 @@
 """Interactive D&D REPL using ClaudeSDKClient."""
 
 import asyncio
-from claude_agent_sdk import ClaudeSDKClient, AssistantMessage, TextBlock
+
+from claude_agent_sdk import AssistantMessage, ClaudeSDKClient, TextBlock
+
 from .claude_agent import get_options, process_message, run_bookkeeping_subagent
-from .logging_config import dm_logger
-from .logging_config import logger
+from .logging_config import dm_logger, logger
 
 
 async def repl():
@@ -19,7 +20,7 @@ async def repl():
                 user_input = input("You: ").strip()
                 if not user_input:
                     continue
-                if user_input.lower() in ['exit', 'quit']:
+                if user_input.lower() in ["exit", "quit"]:
                     break
 
                 turn_count += 1

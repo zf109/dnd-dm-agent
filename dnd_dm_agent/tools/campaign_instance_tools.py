@@ -35,10 +35,7 @@ def create_campaign_instance(
         instance_path = CAMPAIGNS_DIR / campaign_instance_name
 
         if instance_path.exists():
-            return {
-                "status": "error",
-                "error_message": f"Campaign instance '{campaign_instance_name}' already exists"
-            }
+            return {"status": "error", "error_message": f"Campaign instance '{campaign_instance_name}' already exists"}
 
         instance_path.mkdir(exist_ok=True)
 
@@ -90,7 +87,4 @@ def create_campaign_instance(
         }
 
     except Exception as e:
-        return {
-            "status": "error",
-            "error_message": f"Failed to create campaign instance: {str(e)}"
-        }
+        return {"status": "error", "error_message": f"Failed to create campaign instance: {str(e)}"}

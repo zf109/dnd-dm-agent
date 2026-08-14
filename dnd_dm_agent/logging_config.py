@@ -31,10 +31,7 @@ def setup_logging(level: str = "INFO") -> logging.Logger:
         return root
 
     # %(name)s will show dnd_dm_agent / dnd_dm_agent.dm / dnd_dm_agent.bookkeeping etc.
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
     # Console handler (INFO and above)
     console_handler = logging.StreamHandler(sys.stdout)
